@@ -29,6 +29,10 @@ func SetObjectTemplateToContext(ctx context.Context, objectTemplate *entity.Obje
 	return context.WithValue(ctx, ObjectTemplatePayloadKey, objectTemplate)
 }
 
+func SetEntityTemplateToContext(ctx context.Context, entityTemplate *entity.EntityTemplate) context.Context {
+	return context.WithValue(ctx, EntityTemplatePayloadKey, entityTemplate)
+}
+
 func SetUserAuthTokenToContext(ctx context.Context, userAuthToken *entity.UserAuthToken) context.Context {
 	return context.WithValue(ctx, UserAuthTokenPayloadKey, userAuthToken)
 }
@@ -85,6 +89,15 @@ func GetObjectTemplateFromContext(ctx context.Context) *entity.ObjectTemplate {
 	}
 
 	return objectTemplateValue
+}
+
+func GetEntityTemplateFromContext(ctx context.Context) *entity.EntityTemplate {
+	entityTemplateValue, ok := ctx.Value(EntityTemplatePayloadKey).(*entity.EntityTemplate)
+	if !ok {
+		return nil
+	}
+
+	return entityTemplateValue
 }
 
 func GetUserAuthTokenFromContext(ctx context.Context) *entity.UserAuthToken {

@@ -79,6 +79,20 @@ func ParseObjectTemplateID(c *gin.Context) (int64, error) {
 	return int64(partitionIDInt), nil
 }
 
+func ParseEntityTemplateID(c *gin.Context) (int64, error) {
+	partitionID := c.Param(keys.EntityTemplateID)
+
+	partitionIDInt, err := strconv.Atoi(partitionID)
+	if err != nil {
+		return 0, fmt.Errorf("invalid value entity_template_id")
+	}
+	if partitionIDInt == 0 {
+		return 0, fmt.Errorf("entity_template_id is empty")
+	}
+
+	return int64(partitionIDInt), nil
+}
+
 func Parse(c *gin.Context, v any) (context.Context, error) {
 	ctx := c.Request.Context()
 

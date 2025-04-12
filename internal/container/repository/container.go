@@ -3,6 +3,12 @@ package repository
 import (
 	"go.uber.org/fx"
 	"municipality_app/internal/data/repository/chapter"
+	"municipality_app/internal/data/repository/entity"
+	"municipality_app/internal/data/repository/entity_attribute"
+	"municipality_app/internal/data/repository/entity_attribute_value"
+	"municipality_app/internal/data/repository/entity_template"
+	"municipality_app/internal/data/repository/entity_to_partition"
+	"municipality_app/internal/data/repository/entity_type"
 	"municipality_app/internal/data/repository/location"
 	"municipality_app/internal/data/repository/municipality"
 	"municipality_app/internal/data/repository/object"
@@ -34,5 +40,12 @@ var (
 		object_attribute.New,
 		object_attribute_value.New,
 		object_to_partition.New,
+
+		entity_type.New,
+		entity_template.New,
+		entity.New,
+		entity_attribute.New,
+		entity_attribute_value.New,
+		entity_to_partition.New,
 	)
 )

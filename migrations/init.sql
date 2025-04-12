@@ -134,8 +134,51 @@ CREATE TABLE IF NOT EXISTS municipality_object_attribute_value (
     FOREIGN KEY (object_id) REFERENCES municipality_object(id) ON delete CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS municipality_object_to_passport_partition (
-    object_id bigint NOT NULL,
-    partition_id bigint NOT NULL,
-    UNIQUE (object_id, partition_id)
+CREATE TABLE IF NOT EXISTS municipality_entity_type (
+    id BIGSERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL UNIQUE
+);
+
+CREATE TABLE IF NOT EXISTS municipality_entity_template (
+    id BIGSERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    entity_type_id bigint NOT NULL,
+    municipality_id bigint NOT NULL,
+    FOREIGN KEY (entity_type_id) REFERENCES municipality_entity_type(id) ON delete cascade,
+    FOREIGN KEY (municipality_id) REFERENCES municipality(id) ON delete cascade,
+    UNIQUE (municipality_id, name)
+);
+
+CREATE TABLE IF NOT EXISTS municipality_entity (
+    id BIGSERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL UNIQUE,
+    municipality_entity_template_id bigint NOT NULL,
+    description text,
+    FOREIGN KEY (municipality_entity_template_id) REFERENCES municipality_entity_template(id) ON delete cascade
+);
+
+CREATE TABLE IF NOT EXISTS municipality_entity_to_passport_partition (
+    municipality_passport_partitition_id bigint NOT NULL,
+    municipality_entity_id bigint NOT NULL,
+    UNIQUE (municipality_passport_partitition_id, municipality_entity_id)
+);
+
+CREATE TABLE IF NOT EXISTS municipality_entity_attribute (
+    id BIGSERIAL PRIMARY KEY,
+    entity_template_id bigint NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    default_value VARCHAR(255) NOT NULL,
+    to_show bool NOT NULL default false,
+    UNIQUE (entity_template_id, name),
+    FOREIGN KEY (entity_template_id) REFERENCES municipality_entity_template(id) ON delete CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS municipality_entity_attribute_value (
+    id BIGSERIAL PRIMARY KEY,
+    entity_attribute_id bigint NOT NULL,
+    entity_id bigint NOT NULL,
+    value VARCHAR(255) NOT NULL,
+    UNIQUE (id, entity_attribute_id),
+    FOREIGN KEY (entity_attribute_id) REFERENCES municipality_entity_attribute(id) ON delete CASCADE,
+    FOREIGN KEY (entity_id) REFERENCES municipality_entity(id) ON delete CASCADE
 );

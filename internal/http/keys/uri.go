@@ -6,6 +6,7 @@ const (
 	ChapterID         = "chapter_id"
 	PartitionID       = "partition_id"
 	ObjectTemplateID  = "object_template_id"
+	EntityTemplateID  = "entity_template_id"
 )
 
 func NewUriKeyPlaceHolder(key string) string {

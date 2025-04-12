@@ -8,4 +8,5 @@ const (
 	ChapterContextPayloadKey      = "chapter"
 	PartitionContextPayloadKey    = "partition"
 	ObjectTemplatePayloadKey      = "object_template"
+	EntityTemplatePayloadKey      = "entity_template"
 )

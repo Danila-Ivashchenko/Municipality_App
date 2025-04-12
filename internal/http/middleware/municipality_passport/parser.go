@@ -167,3 +167,43 @@ func (m *Middleware) WithObjectTemplate() gin.HandlerFunc {
 		c.Next()
 	}
 }
+
+func (m *Middleware) WithEntityTemplate() gin.HandlerFunc {
+	return func(c *gin.Context) {
+
+		ctx := c.Request.Context()
+
+		municipality := context_paylod_parser.GetMunicipalityFromContext(ctx)
+		if municipality == nil {
+			response.Error(c, errors.New("municipality not found"))
+			c.Abort()
+			return
+		}
+
+		templateID, err := parser.ParseEntityTemplateID(c)
+		if err != nil {
+			response.Error(c, err)
+			c.Abort()
+			return
+		}
+
+		template, err := m.Params.EntityTemplateService.GetByID(ctx, templateID)
+		if err != nil {
+			response.Error(c, err)
+			c.Abort()
+			return
+		}
+
+		if template == nil {
+			response.Error(c, errors.New("template not found"))
+			c.Abort()
+			return
+		}
+
+		ctx = context_paylod_parser.SetEntityTemplateToContext(ctx, template)
+
+		c.Request = c.Request.WithContext(ctx)
+
+		c.Next()
+	}
+}

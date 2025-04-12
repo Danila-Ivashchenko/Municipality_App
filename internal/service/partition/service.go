@@ -179,6 +179,10 @@ func (svc *partitionService) Create(ctx context.Context, data *service.CreateOne
 		objectIDs            []int64
 		objectTemplateMapIDs = make(map[int64]struct{})
 		objectTemplateIDs    []int64
+
+		entityIDs            []int64
+		entityTemplateMapIDs = make(map[int64]struct{})
+		entityTemplateIDs    []int64
 	)
 
 	allChapters, err := svc.PartitionRepository.GetByChapterID(ctx, data.ChapterID)
@@ -235,7 +239,34 @@ func (svc *partitionService) Create(ctx context.Context, data *service.CreateOne
 		return nil, err
 	}
 
-	result := entity.NewPartitionEx(*partition, templatesEx)
+	entitiesToPartition, err := svc.EntityToPartitionService.ActualizeToPartition(ctx, partition.ID, data.EntityIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, e := range entitiesToPartition {
+		entityIDs = append(entityIDs, e.EntityID)
+	}
+
+	entities, err := svc.EntityService.GetByIDs(ctx, entityIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, e := range entities {
+		entityTemplateMapIDs[e.EntityTemplateID] = struct{}{}
+	}
+
+	for templateID := range entityTemplateMapIDs {
+		entityTemplateIDs = append(entityTemplateIDs, templateID)
+	}
+
+	entitiesTemplatesEx, err := svc.EntityTemplateService.GetExByIDs(ctx, entityTemplateIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	result := entity.NewPartitionEx(*partition, templatesEx, entitiesTemplatesEx)
 
 	return &result, err
 }
@@ -270,6 +301,38 @@ func (svc *partitionService) getObjectsToPartition(ctx context.Context, partitio
 	}
 
 	return svc.ObjectTemplateService.GetExByIDs(ctx, objectTemplateIDs)
+}
+
+func (svc *partitionService) getEntitiesToPartition(ctx context.Context, partitionID int64) ([]entity.EntityTemplateEx, error) {
+	var (
+		entityIDs            []int64
+		entityTemplateMapIDs = make(map[int64]struct{})
+		entityTemplateIDs    []int64
+	)
+
+	entitiesToPartition, err := svc.EntityToPartitionService.GetToPartition(ctx, partitionID)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, e := range entitiesToPartition {
+		entityIDs = append(entityIDs, e.EntityID)
+	}
+
+	entities, err := svc.EntityService.GetByIDs(ctx, entityIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, e := range entities {
+		entityTemplateMapIDs[e.EntityTemplateID] = struct{}{}
+	}
+
+	for templateID := range entityTemplateMapIDs {
+		entityTemplateIDs = append(entityTemplateIDs, templateID)
+	}
+
+	return svc.EntityTemplateService.GetExByIDs(ctx, entityTemplateIDs)
 }
 
 func (svc *partitionService) Update(ctx context.Context, data *service.UpdatePartitionData) (*entity.PartitionEx, error) {
@@ -313,7 +376,19 @@ func (svc *partitionService) Update(ctx context.Context, data *service.UpdatePar
 		}
 	}
 
+	if data.EntityIDs != nil {
+		_, err = svc.EntityToPartitionService.ActualizeToPartition(ctx, partition.ID, *data.EntityIDs)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	objectsEx, err := svc.getObjectsToPartition(ctx, partition.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	entitiesEx, err := svc.getEntitiesToPartition(ctx, partition.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -323,7 +398,7 @@ func (svc *partitionService) Update(ctx context.Context, data *service.UpdatePar
 		return nil, err
 	}
 
-	result := entity.NewPartitionEx(*partitionNew, objectsEx)
+	result := entity.NewPartitionEx(*partitionNew, objectsEx, entitiesEx)
 
 	return &result, nil
 }
@@ -387,7 +462,12 @@ func (svc *partitionService) GetExByID(ctx context.Context, id int64) (*entity.P
 		return nil, err
 	}
 
-	result := entity.NewPartitionEx(*partition, objectsEx)
+	entitiesEx, err := svc.getEntitiesToPartition(ctx, partition.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	result := entity.NewPartitionEx(*partition, objectsEx, entitiesEx)
 
 	return &result, nil
 }

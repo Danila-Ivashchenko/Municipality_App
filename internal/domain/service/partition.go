@@ -37,6 +37,7 @@ type CreateOnePartitionData struct {
 	Text        string
 	OrderNumber uint
 	ObjectIDs   []int64
+	EntityIDs   []int64
 }
 
 type UpdatePartitionData struct {
@@ -46,4 +47,5 @@ type UpdatePartitionData struct {
 	Text        *string
 	OrderNumber *uint
 	ObjectIDs   *[]int64
+	EntityIDs   *[]int64
 }

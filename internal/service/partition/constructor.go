@@ -13,6 +13,10 @@ type ServiceParams struct {
 	ObjectToPartitionService service.ObjectToPartitionService
 	ObjectService            service.ObjectService
 	ObjectTemplateService    service.ObjectTemplateService
+
+	EntityToPartitionService service.EntityToPartitionService
+	EntityService            service.EntityService
+	EntityTemplateService    service.EntityTemplateService
 }
 
 type partitionService struct {

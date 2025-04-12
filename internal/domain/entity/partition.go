@@ -17,9 +17,10 @@ type PartitionEx struct {
 	Text        string
 	OrderNumber uint
 	Objects     []ObjectTemplateEx
+	Entities    []EntityTemplateEx
 }
 
-func NewPartitionEx(i Partition, objects []ObjectTemplateEx) PartitionEx {
+func NewPartitionEx(i Partition, objects []ObjectTemplateEx, entities []EntityTemplateEx) PartitionEx {
 	result := PartitionEx{
 		ID:          i.ID,
 		ChapterID:   i.ChapterID,
@@ -28,6 +29,7 @@ func NewPartitionEx(i Partition, objects []ObjectTemplateEx) PartitionEx {
 		Text:        i.Text,
 		OrderNumber: i.OrderNumber,
 		Objects:     objects,
+		Entities:    entities,
 	}
 
 	return result

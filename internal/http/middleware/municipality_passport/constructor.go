@@ -12,6 +12,7 @@ type MiddlewareParams struct {
 	ChapterService        service.ChapterService
 	PartitionService      service.PartitionService
 	ObjectTemplateService service.ObjectTemplateService
+	EntityTemplateService service.EntityTemplateService
 }
 
 type Middleware struct {
