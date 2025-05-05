@@ -1,4 +1,4 @@
-package object_template
+package entity_template
 
 import (
 	"go.uber.org/fx"
@@ -14,6 +14,7 @@ type ServiceParams struct {
 
 	EntityAttributeService service.EntityAttributeService
 	EntityService          service.EntityService
+	EntityTypeService      service.EntityTypeService
 }
 
 type objectTemplateService struct {

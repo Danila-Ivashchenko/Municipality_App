@@ -50,6 +50,10 @@ func (r *createObjectTypeReq) Convert() *service.CreateObjectTypeData {
 	}
 }
 
+type deleteObjectTypeReq struct {
+	ID int64 `json:"id"`
+}
+
 type updateObjectTypeReq struct {
 	ID   int64   `json:"id"`
 	Name *string `json:"name"`
@@ -58,6 +62,10 @@ type updateObjectTypeReq struct {
 func (r *updateObjectTypeReq) Validate() error {
 	if r.Name == nil {
 		return errors.New("name is required")
+	} else {
+		if len(*r.Name) == 0 {
+			return errors.New("name is required")
+		}
 	}
 
 	if r.ID == 0 {

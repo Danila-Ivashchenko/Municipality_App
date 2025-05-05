@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"municipality_app/internal/domain/entity"
+	"municipality_app/internal/domain/repository"
 	"municipality_app/internal/domain/service"
 )
 
@@ -53,28 +54,44 @@ func (svc *objectService) UpdateMultiply(ctx context.Context, data *service.Upda
 
 		locationData := objectData.LocationData
 
-		if locationData != nil && object.LocationID != nil {
-			location, err = svc.LocationRepository.GetByID(ctx, *object.LocationID)
+		if locationData != nil {
+			if object.LocationID != nil {
+				location, err = svc.LocationRepository.GetByID(ctx, *object.LocationID)
 
-			if locationData.Address != nil {
-				location.Address = *locationData.Address
-			}
+				if locationData.Address != nil {
+					location.Address = *locationData.Address
+				}
 
-			if locationData.Latitude != nil {
-				location.Latitude = *locationData.Latitude
-			}
+				if locationData.Latitude != nil {
+					location.Latitude = *locationData.Latitude
+				}
 
-			if locationData.Longitude != nil {
-				location.Longitude = *locationData.Longitude
-			}
+				if locationData.Longitude != nil {
+					location.Longitude = *locationData.Longitude
+				}
 
-			if locationData.Geometry != nil {
-				location.Geometry = locationData.Geometry
-			}
+				if locationData.Geometry != nil {
+					location.Geometry = locationData.Geometry
+				}
 
-			location, err = svc.LocationRepository.Update(ctx, location)
-			if err != nil {
-				return nil, err
+				location, err = svc.LocationRepository.Update(ctx, location)
+				if err != nil {
+					return nil, err
+				}
+			} else {
+				locationCreateData := &repository.CreateLocationData{
+					Address:   objectData.LocationData.Address,
+					Latitude:  objectData.LocationData.Latitude,
+					Longitude: objectData.LocationData.Longitude,
+					Geometry:  objectData.LocationData.Geometry,
+				}
+
+				location, err = svc.LocationRepository.Create(ctx, locationCreateData)
+				if err != nil {
+					return nil, err
+				}
+
+				object.LocationID = &location.ID
 			}
 		}
 

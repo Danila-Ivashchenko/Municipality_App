@@ -1,4 +1,4 @@
-package object_template
+package entity_template
 
 import (
 	"context"
@@ -33,7 +33,12 @@ func (svc *objectTemplateService) GetExByID(ctx context.Context, id int64) (*ent
 		return nil, err
 	}
 
-	return entity.NewEntityTemplateEx(*template, objectsEx, attributes), nil
+	entityTyper, err := svc.EntityTypeService.GetByID(ctx, template.EntityTypeID)
+	if err != nil {
+		return nil, err
+	}
+
+	return entity.NewEntityTemplateEx(*template, objectsEx, attributes, entityTyper), nil
 }
 
 func (svc *objectTemplateService) GetByMunicipalityID(ctx context.Context, partitionID int64) ([]entity.EntityTemplate, error) {

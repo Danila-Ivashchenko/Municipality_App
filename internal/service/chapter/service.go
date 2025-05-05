@@ -246,7 +246,26 @@ func (svc *chapterService) changeOrder(ctx context.Context, order uint, chapterI
 }
 
 func (svc *chapterService) Create(ctx context.Context, data *service.CreateOneChapterData) (*entity.Chapter, error) {
-	err := svc.clearOrder(ctx, data.OrderNumber, data.PassportID)
+	var (
+		maxOrder uint = 1
+	)
+
+	chapters, err := svc.ChapterRepository.GetByPassportID(ctx, data.PassportID)
+	if err != nil {
+		return nil, err
+	}
+
+	if data.OrderNumber == 0 {
+		for _, chapter := range chapters {
+			if chapter.OrderNumber >= maxOrder {
+				maxOrder = chapter.OrderNumber + 1
+			}
+		}
+
+		data.OrderNumber = maxOrder
+	}
+
+	err = svc.clearOrder(ctx, data.OrderNumber, data.PassportID)
 	if err != nil {
 		return nil, err
 	}
@@ -268,15 +287,15 @@ func (svc *chapterService) Update(ctx context.Context, data *service.UpdateChapt
 		return nil, err
 	}
 
-	if data.Name != nil {
+	if data.Name != nil && *data.Name != chapter.Name {
 		chapter.Name = *data.Name
 	}
 
-	if data.Description != nil {
+	if data.Description != nil && *data.Description != chapter.Description {
 		chapter.Description = *data.Description
 	}
 
-	if data.Text != nil {
+	if data.Text != nil && *data.Text != chapter.Text {
 		chapter.Text = *data.Text
 	}
 
@@ -297,8 +316,7 @@ func (svc *chapterService) Update(ctx context.Context, data *service.UpdateChapt
 
 func (svc *chapterService) DeleteToPassport(ctx context.Context, ids []int64, passportID int64) error {
 	var (
-		err      error
-		maxOrder uint
+		err error
 	)
 
 	allChapters, err := svc.ChapterRepository.GetByPassportID(ctx, passportID)
@@ -306,12 +324,23 @@ func (svc *chapterService) DeleteToPassport(ctx context.Context, ids []int64, pa
 		return err
 	}
 
-	maxOrder = uint(len(allChapters))
+	sort.Slice(allChapters, func(i, j int) bool {
+		return allChapters[i].OrderNumber < allChapters[j].OrderNumber
+	})
 
 	for _, id := range ids {
-		err = svc.changeOrder(ctx, maxOrder, id, id)
-		if err != nil {
-			return err
+		for i, chapter := range allChapters {
+			if chapter.ID == id {
+				for j := i + 1; j < len(allChapters); j++ {
+					allChapters[j].OrderNumber -= 1
+
+					err = svc.ChapterRepository.ChangeOrder(ctx, allChapters[j].ID, allChapters[j].OrderNumber)
+					if err != nil {
+						return err
+					}
+				}
+				break
+			}
 		}
 
 		err = svc.ChapterRepository.Delete(ctx, id)

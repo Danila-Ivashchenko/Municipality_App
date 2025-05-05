@@ -18,10 +18,11 @@ type PassportEx struct {
 	IsMain    bool
 	IsHidden  bool
 
-	Chapters []ChapterEx
+	Chapters     []ChapterEx
+	PassportFile *PassportFile
 }
 
-func NewPassportEx(i *Passport, chapters []ChapterEx) *PassportEx {
+func NewPassportEx(i *Passport, chapters []ChapterEx, file *PassportFile) *PassportEx {
 	result := &PassportEx{
 		ID:             i.ID,
 		Name:           i.Name,
@@ -33,6 +34,7 @@ func NewPassportEx(i *Passport, chapters []ChapterEx) *PassportEx {
 		UpdatedAt:      i.UpdatedAt,
 		IsMain:         i.IsMain,
 		IsHidden:       i.IsHidden,
+		PassportFile:   file,
 	}
 
 	result.Chapters = chapters

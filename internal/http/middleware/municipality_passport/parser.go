@@ -48,6 +48,26 @@ func (m *Middleware) WithPassport() gin.HandlerFunc {
 	}
 }
 
+func (m *Middleware) UpdatePassportUpdatedAt() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Next()
+
+		ctx := c.Request.Context()
+
+		passport := context_paylod_parser.GetPassportFromContext(ctx)
+		if passport == nil {
+			response.Error(c, errors.New("passport not found"))
+			c.Abort()
+			return
+		}
+
+		err := m.Params.PassportService.UpdatedAt(ctx, passport.ID)
+		if err != nil {
+			response.Error(c, err)
+		}
+	}
+}
+
 func (m *Middleware) WithChapter() gin.HandlerFunc {
 	return func(c *gin.Context) {
 
@@ -201,6 +221,46 @@ func (m *Middleware) WithEntityTemplate() gin.HandlerFunc {
 		}
 
 		ctx = context_paylod_parser.SetEntityTemplateToContext(ctx, template)
+
+		c.Request = c.Request.WithContext(ctx)
+
+		c.Next()
+	}
+}
+
+func (m *Middleware) WithRoute() gin.HandlerFunc {
+	return func(c *gin.Context) {
+
+		ctx := c.Request.Context()
+
+		partition := context_paylod_parser.GetPartitionFromContext(ctx)
+		if partition == nil {
+			response.Error(c, errors.New("partition not found"))
+			c.Abort()
+			return
+		}
+
+		routeID, err := parser.ParseRouteID(c)
+		if err != nil {
+			response.Error(c, err)
+			c.Abort()
+			return
+		}
+
+		route, err := m.Params.RouteService.GetByIDAndPartitionID(ctx, routeID, partition.ID)
+		if err != nil {
+			response.Error(c, err)
+			c.Abort()
+			return
+		}
+
+		if route == nil {
+			response.Error(c, errors.New("route not found"))
+			c.Abort()
+			return
+		}
+
+		ctx = context_paylod_parser.SetRouteToContext(ctx, route)
 
 		c.Request = c.Request.WithContext(ctx)
 

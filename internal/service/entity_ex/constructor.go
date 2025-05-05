@@ -11,6 +11,7 @@ type ServiceParams struct {
 	EntityService          service.EntityService
 	EntityTemplateService  service.EntityTemplateService
 	EntityAttributeService service.EntityAttributeService
+	EntityTypeService      service.EntityTypeService
 }
 
 type entityExService struct {

@@ -1,4 +1,4 @@
-package object
+package entity
 
 import (
 	"errors"
@@ -31,4 +31,33 @@ func (h *Handler) GetTemplateByID(c *gin.Context) {
 
 	v := view.NewEntityTemplateExView(objectTemplate)
 	response.Response(c, v)
+}
+
+func (h *Handler) GetTemplatesByMunicipality(c *gin.Context) {
+	ctx := parser.Context(c)
+
+	municipality := context_paylod_parser.GetMunicipalityFromContext(ctx)
+	if municipality == nil {
+		response.Error(c, errors.New("municipality is nil"))
+		return
+	}
+
+	objectTemplates, err := h.Params.EntityExService.GetByMunicipalityID(ctx, municipality.ID)
+	if err != nil {
+		response.Error(c, err)
+		return
+	}
+
+	if objectTemplates == nil || len(objectTemplates) == 0 {
+		response.ResponseNoContent(c)
+		return
+	}
+
+	views := make([]view.EntityTemplateExView, 0)
+
+	for _, objectTemplate := range objectTemplates {
+		views = append(views, *view.NewEntityTemplateExView(&objectTemplate))
+	}
+
+	response.Response(c, views)
 }

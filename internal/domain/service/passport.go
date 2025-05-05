@@ -8,6 +8,7 @@ import (
 type PassportService interface {
 	Create(ctx context.Context, data *CreatePassportData) (*entity.Passport, error)
 	Update(ctx context.Context, data *UpdatePassportData) (*entity.Passport, error)
+	UpdatedAt(ctx context.Context, passportID int64) error
 	Delete(ctx context.Context, id, municipalityID int64) error
 
 	MakeMainPassportToMunicipality(ctx context.Context, id, municipalityID int64) error
@@ -38,6 +39,7 @@ type UpdatePassportData struct {
 
 	Description *string
 	Year        *string
+	IsMain      *bool
 
 	IsHidden *bool
 }

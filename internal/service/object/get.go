@@ -76,6 +76,39 @@ func (svc *objectService) GetExByIDs(ctx context.Context, ids []int64) ([]entity
 	return result, nil
 }
 
+func (svc *objectService) GetExByID(ctx context.Context, id int64) (*entity.ObjectEx, error) {
+	var (
+		location *entity.Location
+		result   *entity.ObjectEx
+	)
+
+	object, err := svc.ObjectRepository.GetByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	if object == nil {
+		return nil, nil
+	}
+
+	if object.LocationID != nil {
+		location, err = svc.LocationRepository.GetByID(ctx, *object.LocationID)
+		if err != nil {
+			return nil, err
+		}
+
+	}
+
+	attributeValues, err := svc.ObjectAttributeService.GetAttributesExByObjectID(ctx, object.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	result = entity.NewObjectExPtr(object, location, attributeValues)
+
+	return result, nil
+}
+
 func (svc *objectService) GetExByTemplateID(ctx context.Context, templateID int64) ([]entity.ObjectEx, error) {
 	var (
 		objectIDs []int64

@@ -47,7 +47,7 @@ func (r *repo) Delete(ctx context.Context, id int64) error {
 }
 
 func (r *repo) GetByObjectTemplateID(ctx context.Context, templateID int64) ([]entity.ObjectAttribute, error) {
-	return r.fetchRowsWithCondition(ctx, "object_template_id = $1", templateID)
+	return r.fetchRowsWithCondition(ctx, "object_template_id = $1 ORDER BY id ASC", templateID)
 }
 
 func (r *repo) GetByObjectTemplateIDAndID(ctx context.Context, id, templateID int64) (*entity.ObjectAttribute, error) {

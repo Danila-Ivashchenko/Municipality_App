@@ -7,6 +7,7 @@ type ObjectAttributeView struct {
 	Name             string `json:"name"`
 	ObjectTemplateID int64  `json:"object_template_id"`
 	DefaultValue     string `json:"default_value"`
+	ToShow           bool   `json:"to_show"`
 }
 
 func NewObjectAttributeView(i entity.ObjectAttribute) ObjectAttributeView {
@@ -15,6 +16,7 @@ func NewObjectAttributeView(i entity.ObjectAttribute) ObjectAttributeView {
 		Name:             i.Name,
 		ObjectTemplateID: i.ObjectTemplateID,
 		DefaultValue:     i.DefaultValue,
+		ToShow:           i.ToShow,
 	}
 }
 

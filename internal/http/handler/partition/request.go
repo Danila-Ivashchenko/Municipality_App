@@ -11,6 +11,7 @@ type reqPartitionCreateData struct {
 	Text        string  `json:"text"`
 	OrderNumber *uint   `json:"order_number"`
 	ObjectIDs   []int64 `json:"objects"`
+	EntityIDs   []int64 `json:"entities"`
 }
 
 func (req *reqPartitionCreateData) Validate() error {
@@ -33,6 +34,7 @@ func (req *reqPartitionCreateData) Convert(chapterID int64) *service.CreateOnePa
 		Text:        req.Text,
 		OrderNumber: *req.OrderNumber,
 		ObjectIDs:   req.ObjectIDs,
+		EntityIDs:   req.EntityIDs,
 	}
 
 	return result
@@ -44,6 +46,7 @@ type reqPartitionUpdateData struct {
 	Text        *string  `json:"text"`
 	OrderNumber *uint    `json:"order_number"`
 	ObjectIDs   *[]int64 `json:"objects"`
+	EntityIDs   *[]int64 `json:"entities"`
 }
 
 func (req *reqPartitionUpdateData) Convert(id int64) *service.UpdatePartitionData {
@@ -54,6 +57,7 @@ func (req *reqPartitionUpdateData) Convert(id int64) *service.UpdatePartitionDat
 		Text:        req.Text,
 		OrderNumber: req.OrderNumber,
 		ObjectIDs:   req.ObjectIDs,
+		EntityIDs:   req.EntityIDs,
 	}
 
 	return result

@@ -16,14 +16,16 @@ type EntityTemplateEx struct {
 	Template   EntityTemplate
 	Attributes []EntityAttribute
 	Entities   []EntityEx
+	EntityType *EntityType
 }
 
-func NewEntityTemplateEx(template EntityTemplate, entityEx []EntityEx, attributes []EntityAttribute) *EntityTemplateEx {
+func NewEntityTemplateEx(template EntityTemplate, entityEx []EntityEx, attributes []EntityAttribute, entityType *EntityType) *EntityTemplateEx {
 	result := &EntityTemplateEx{}
 
 	result.Template = template
 	result.Entities = entityEx
 	result.Attributes = attributes
+	result.EntityType = entityType
 
 	return result
 }

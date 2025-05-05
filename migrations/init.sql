@@ -114,6 +114,9 @@ CREATE TABLE IF NOT EXISTS municipality_object_to_passport_partition (
     UNIQUE (municipality_passport_partitition_id, municipality_object_id)
 );
 
+ALTER TABLE municipality_object_to_passport_partition ADD FOREIGN KEY (municipality_passport_partitition_id) REFERENCES municipality_passport_partitition(id) ON delete CASCADE
+ALTER TABLE municipality_object_to_passport_partition ADD FOREIGN KEY (municipality_object_id) REFERENCES municipality_object(id) ON delete CASCADE
+
 CREATE TABLE IF NOT EXISTS municipality_object_attribute (
     id BIGSERIAL PRIMARY KEY,
     object_template_id bigint NOT NULL,
@@ -163,6 +166,9 @@ CREATE TABLE IF NOT EXISTS municipality_entity_to_passport_partition (
     UNIQUE (municipality_passport_partitition_id, municipality_entity_id)
 );
 
+ALTER TABLE municipality_entity_to_passport_partition ADD FOREIGN KEY (municipality_passport_partitition_id) REFERENCES municipality_passport_partitition(id) ON delete CASCADE
+ALTER TABLE municipality_entity_to_passport_partition ADD FOREIGN KEY (municipality_entity_id) REFERENCES municipality_entity(id) ON delete CASCADE
+
 CREATE TABLE IF NOT EXISTS municipality_entity_attribute (
     id BIGSERIAL PRIMARY KEY,
     entity_template_id bigint NOT NULL,
@@ -182,3 +188,44 @@ CREATE TABLE IF NOT EXISTS municipality_entity_attribute_value (
     FOREIGN KEY (entity_attribute_id) REFERENCES municipality_entity_attribute(id) ON delete CASCADE,
     FOREIGN KEY (entity_id) REFERENCES municipality_entity(id) ON delete CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS route (
+    id BIGSERIAL PRIMARY KEY,
+    municipality_passport_partitition_id bigint NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    length bigint,
+    duration bigint NOT NULL,
+    level bigint NOT NULL,
+    movement_way text,
+    seasonality text,
+    personal_equipment text,
+    dangers text,
+    rules text,
+    route_equipment text,
+    geometry jsonb,
+    FOREIGN KEY (municipality_passport_partitition_id) REFERENCES municipality_passport_partitition(id) ON delete cascade
+);
+
+CREATE TABLE IF NOT EXISTS municipality_route_object (
+    id BIGSERIAL PRIMARY KEY,
+    route_id bigint NOT NULL,
+    object_name VARCHAR(255) NOT NULL,
+    order_number int not null,
+    source_object_id bigint,
+    location_id bigint,
+    FOREIGN KEY (route_id) REFERENCES route(id) ON delete cascade,
+    FOREIGN KEY (source_object_id) REFERENCES municipality_object(id) ON delete set null,
+    FOREIGN KEY (location_id) REFERENCES location(id) ON delete SET NULL,
+    UNIQUE (object_name, route_id)
+);
+
+CREATE TABLE IF NOT EXISTS municipality_passport_file (
+    id BIGSERIAL PRIMARY KEY,
+    path varchar(500) NOT NULL,
+    passport_id bigint NOT NULL,
+    file_name varchar(500) NOT NULL,
+    created_at TIMESTAMP Default now(),
+    FOREIGN KEY (passport_id) REFERENCES municipality_passport(id) ON delete cascade,
+    UNIQUE (passport_id, path)
+)
+

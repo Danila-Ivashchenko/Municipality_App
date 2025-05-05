@@ -42,8 +42,18 @@ func (r userRepository) CreateUser(ctx context.Context, data *repository.CreateU
 }
 
 func (r userRepository) UpdateUser(ctx context.Context, user *entity.User) (*entity.User, error) {
-	//TODO implement me
-	panic("implement me")
+	m := newUserModel(user)
+
+	err := r.exexUserQuery(ctx, updateUserQuery, m.Name, m.LastName, m.Email, m.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	return m.convert(), nil
+}
+
+func (r userRepository) ChangeUserPassword(ctx context.Context, userID int64, password string) error {
+	return r.exexUserQuery(ctx, changeUserPasswordQuery, password, userID)
 }
 
 func (r userRepository) GetUserByID(ctx context.Context, id int64) (*entity.User, error) {

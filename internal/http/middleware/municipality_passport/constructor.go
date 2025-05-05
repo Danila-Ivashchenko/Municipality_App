@@ -13,6 +13,7 @@ type MiddlewareParams struct {
 	PartitionService      service.PartitionService
 	ObjectTemplateService service.ObjectTemplateService
 	EntityTemplateService service.EntityTemplateService
+	RouteService          service.RouteService
 }
 
 type Middleware struct {

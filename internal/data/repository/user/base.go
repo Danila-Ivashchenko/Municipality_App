@@ -8,9 +8,11 @@ import (
 )
 
 const (
-	createUserQuery     = `INSERT INTO users (email, name, last_name, password) VALUES ($1, $2, $3, $4) RETURNING id`
-	selectUserQuery     = `SELECT id, email, name, last_name, is_admin, is_blocked, created_at FROM users `
-	selectUserFullQuery = `SELECT id, email, name, last_name, is_admin, is_blocked, password, created_at FROM users `
+	createUserQuery         = `INSERT INTO users (email, name, last_name, password) VALUES ($1, $2, $3, $4) RETURNING id`
+	selectUserQuery         = `SELECT id, email, name, last_name, is_admin, is_blocked, created_at FROM users `
+	selectUserFullQuery     = `SELECT id, email, name, last_name, is_admin, is_blocked, password, created_at FROM users `
+	changeUserPasswordQuery = `UPDATE users SET password = $1 WHERE id = $2`
+	updateUserQuery         = `UPDATE users SET name = $1, last_name = $2, email = $3 WHERE id = $4`
 )
 
 func (r *userRepository) exexUserQuery(ctx context.Context, sqlQuery string, args ...any) error {

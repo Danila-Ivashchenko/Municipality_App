@@ -40,6 +40,12 @@ func (r *passportRepository) Update(ctx context.Context, data *entity.Passport) 
 	return r.execQuery(ctx, updatePassportQuery, m.Name, m.Description, m.Year, m.IsHidden, updatedAt, m.ID)
 }
 
+func (r *passportRepository) UpdateUpdatedAt(ctx context.Context, passportID int64) error {
+	updatedAt := time.Now().UTC()
+
+	return r.execQuery(ctx, updateUpdatedAtPassportQuery, updatedAt, passportID)
+}
+
 func (r *passportRepository) Delete(ctx context.Context, id int64) error {
 	return r.execQuery(ctx, deletePassportQuery, id)
 }

@@ -1,4 +1,4 @@
-package object_template
+package entity_template
 
 import (
 	"context"
@@ -49,5 +49,10 @@ func (svc *objectTemplateService) Create(ctx context.Context, data *service.Crea
 		attributes = append(attributes, *attribute)
 	}
 
-	return entity.NewEntityTemplateEx(*template, nil, attributes), nil
+	entityTyper, err := svc.EntityTypeService.GetByID(ctx, data.EntityType)
+	if err != nil {
+		return nil, err
+	}
+
+	return entity.NewEntityTemplateEx(*template, nil, attributes, entityTyper), nil
 }

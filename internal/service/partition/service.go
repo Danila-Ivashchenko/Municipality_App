@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"municipality_app/internal/domain/entity"
 	"municipality_app/internal/domain/repository"
 	"municipality_app/internal/domain/service"
@@ -266,7 +267,12 @@ func (svc *partitionService) Create(ctx context.Context, data *service.CreateOne
 		return nil, err
 	}
 
-	result := entity.NewPartitionEx(*partition, templatesEx, entitiesTemplatesEx)
+	routesEx, err := svc.RouteService.GetByPartitionID(ctx, partition.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	result := entity.NewPartitionEx(*partition, templatesEx, entitiesTemplatesEx, routesEx)
 
 	return &result, err
 }
@@ -370,10 +376,12 @@ func (svc *partitionService) Update(ctx context.Context, data *service.UpdatePar
 	}
 
 	if data.ObjectIDs != nil {
-		_, err = svc.ObjectToPartitionService.ActualizeToPartition(ctx, partition.ID, *data.ObjectIDs)
+		res, err := svc.ObjectToPartitionService.ActualizeToPartition(ctx, partition.ID, *data.ObjectIDs)
 		if err != nil {
 			return nil, err
 		}
+
+		slog.Debug(fmt.Sprintf("%v", res))
 	}
 
 	if data.EntityIDs != nil {
@@ -398,7 +406,12 @@ func (svc *partitionService) Update(ctx context.Context, data *service.UpdatePar
 		return nil, err
 	}
 
-	result := entity.NewPartitionEx(*partitionNew, objectsEx, entitiesEx)
+	routesEx, err := svc.RouteService.GetByPartitionID(ctx, partition.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	result := entity.NewPartitionEx(*partitionNew, objectsEx, entitiesEx, routesEx)
 
 	return &result, nil
 }
@@ -467,7 +480,12 @@ func (svc *partitionService) GetExByID(ctx context.Context, id int64) (*entity.P
 		return nil, err
 	}
 
-	result := entity.NewPartitionEx(*partition, objectsEx, entitiesEx)
+	routesEx, err := svc.RouteService.GetByPartitionID(ctx, partition.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	result := entity.NewPartitionEx(*partition, objectsEx, entitiesEx, routesEx)
 
 	return &result, nil
 }

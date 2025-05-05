@@ -93,6 +93,20 @@ func ParseEntityTemplateID(c *gin.Context) (int64, error) {
 	return int64(partitionIDInt), nil
 }
 
+func ParseRouteID(c *gin.Context) (int64, error) {
+	routeID := c.Param(keys.RouteID)
+
+	routeIDInt, err := strconv.Atoi(routeID)
+	if err != nil {
+		return 0, fmt.Errorf("invalid value route_id")
+	}
+	if routeIDInt == 0 {
+		return 0, fmt.Errorf("route_id is empty")
+	}
+
+	return int64(routeIDInt), nil
+}
+
 func Parse(c *gin.Context, v any) (context.Context, error) {
 	ctx := c.Request.Context()
 

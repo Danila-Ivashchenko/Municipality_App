@@ -17,6 +17,7 @@ type ServiceParams struct {
 	EntityToPartitionService service.EntityToPartitionService
 	EntityService            service.EntityService
 	EntityTemplateService    service.EntityTemplateService
+	RouteService             service.RouteService
 }
 
 type partitionService struct {

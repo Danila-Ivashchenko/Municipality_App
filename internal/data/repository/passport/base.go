@@ -9,11 +9,12 @@ import (
 )
 
 const (
-	createPassportQuery       = `INSERT INTO municipality_passport (name, municipality_id, description, year, revision_code, is_main) VALUES ($1, $2, $3, $4, $5, $6)`
-	selectPassportQuery       = `SELECT id, name, municipality_id, description, year, revision_code, is_main, is_hidden, updated_at, created_at  FROM municipality_passport `
-	updatePassportQuery       = `UPDATE municipality_passport SET name = $1, description = $2, year = $3, is_hidden = $4, updated_at = $5 WHERE id = $6`
-	updateIsMainPassportQuery = `UPDATE municipality_passport SET is_main = $1, updated_at = $2 `
-	deletePassportQuery       = "DELETE FROM municipality_passport WHERE id = $1"
+	createPassportQuery          = `INSERT INTO municipality_passport (name, municipality_id, description, year, revision_code, is_main) VALUES ($1, $2, $3, $4, $5, $6)`
+	selectPassportQuery          = `SELECT id, name, municipality_id, description, year, revision_code, is_main, is_hidden, updated_at, created_at  FROM municipality_passport `
+	updatePassportQuery          = `UPDATE municipality_passport SET name = $1, description = $2, year = $3, is_hidden = $4, updated_at = $5 WHERE id = $6`
+	updateUpdatedAtPassportQuery = `UPDATE municipality_passport SET updated_at = $1 WHERE id = $2`
+	updateIsMainPassportQuery    = `UPDATE municipality_passport SET is_main = $1, updated_at = $2 `
+	deletePassportQuery          = "DELETE FROM municipality_passport WHERE id = $1"
 )
 
 func (r *passportRepository) execQuery(ctx context.Context, sqlQuery string, args ...any) error {

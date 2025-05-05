@@ -1,4 +1,4 @@
-package object
+package entity
 
 import (
 	"errors"
@@ -9,8 +9,8 @@ import (
 	"municipality_app/internal/http/view"
 )
 
-func (h *Handler) CreateEntities(c *gin.Context) {
-	req := &createMultiplyEntitiesData{}
+func (h *Handler) UpdateEntities(c *gin.Context) {
+	req := &updateMultiplyEntitiesData{}
 
 	ctx, err := parser.Parse(c, &req)
 	if err != nil {
@@ -31,7 +31,7 @@ func (h *Handler) CreateEntities(c *gin.Context) {
 
 	data := req.Convert(objectTemplate.ID)
 
-	objects, err := h.Params.EntityService.CreateMultiply(ctx, data)
+	objects, err := h.Params.EntityService.UpdateMultiply(ctx, data)
 	if err != nil {
 		response.Error(c, err)
 		return

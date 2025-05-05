@@ -14,6 +14,7 @@ type ServiceParams struct {
 	ObjectExService          service.ObjectExService
 	ObjectService            service.ObjectService
 	ObjectToPartitionService service.ObjectToPartitionService
+	PassportFileService      service.PassportFileService
 }
 
 type passportExService struct {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"municipality_app/internal/domain/entity"
+	"sort"
 )
 
 func (svc *objectTemplateService) GetByNameAndMunicipalityID(ctx context.Context, name string, municipalityID int64) (*entity.ObjectTemplate, error) {
@@ -33,7 +34,12 @@ func (svc *objectTemplateService) GetExByID(ctx context.Context, id int64) (*ent
 		return nil, err
 	}
 
-	return entity.NewObjectTemplateEx(*template, objectsEx, attributes), nil
+	objectType, err := svc.ObjectTypeService.GetByID(ctx, template.ObjectTypeID)
+	if err != nil {
+		return nil, err
+	}
+
+	return entity.NewObjectTemplateEx(*template, objectsEx, attributes, objectType), nil
 }
 
 func (svc *objectTemplateService) GetByMunicipalityID(ctx context.Context, partitionID int64) ([]entity.ObjectTemplate, error) {
@@ -86,6 +92,10 @@ func (svc *objectTemplateService) GetExByIDs(ctx context.Context, ids []int64) (
 		}
 
 	}
+
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].Template.ID < result[j].Template.ID
+	})
 
 	return result, nil
 }

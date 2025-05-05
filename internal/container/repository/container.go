@@ -19,7 +19,10 @@ import (
 	"municipality_app/internal/data/repository/object_type"
 	"municipality_app/internal/data/repository/partition"
 	"municipality_app/internal/data/repository/passport"
+	"municipality_app/internal/data/repository/passport_file"
 	"municipality_app/internal/data/repository/region"
+	"municipality_app/internal/data/repository/route"
+	"municipality_app/internal/data/repository/route_object"
 	"municipality_app/internal/data/repository/user"
 	"municipality_app/internal/data/repository/user_auth_token"
 )
@@ -47,5 +50,10 @@ var (
 		entity_attribute.New,
 		entity_attribute_value.New,
 		entity_to_partition.New,
+
+		route.New,
+		route_object.New,
+
+		passport_file.New,
 	)
 )

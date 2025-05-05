@@ -11,6 +11,7 @@ type PartitionExView struct {
 	OrderNumber uint                   `json:"order_number"`
 	Objects     []ObjectTemplateExView `json:"objects,omitempty"`
 	Entities    []EntityTemplateExView `json:"entities,omitempty"`
+	Routes      []RouteView            `json:"routes,omitempty"`
 }
 
 func NewPartitionExView(i entity.PartitionEx) PartitionExView {
@@ -29,6 +30,10 @@ func NewPartitionExView(i entity.PartitionEx) PartitionExView {
 
 	for _, e := range i.Entities {
 		result.Entities = append(result.Entities, *NewEntityTemplateExView(&e))
+	}
+
+	for _, route := range i.Routes {
+		result.Routes = append(result.Routes, *NewRouteView(&route))
 	}
 
 	return result

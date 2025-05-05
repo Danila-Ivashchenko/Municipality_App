@@ -6,7 +6,7 @@ type ObjectView struct {
 	ID               int64                   `json:"id"`
 	Name             string                  `json:"name"`
 	ObjectTemplateID int64                   `json:"object_template_id"`
-	Location         *ObjectLocationView     `json:"location_id"`
+	Location         *ObjectLocationView     `json:"location"`
 	Description      string                  `json:"description"`
 	Attributes       []ObjectAttributeExView `json:"attributes"`
 }

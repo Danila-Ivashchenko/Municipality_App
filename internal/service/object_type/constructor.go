@@ -9,7 +9,8 @@ import (
 type ServiceParams struct {
 	fx.In
 
-	ObjectTypeRepository repository.ObjectTypeRepository
+	ObjectTypeRepository     repository.ObjectTypeRepository
+	ObjectTemplateRepository repository.ObjectTemplateRepository
 }
 
 type objectTypeService struct {

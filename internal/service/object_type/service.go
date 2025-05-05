@@ -33,6 +33,10 @@ func (svc *objectTypeService) Update(ctx context.Context, data *service.UpdateOb
 		return nil, errors.New("object type does not exist")
 	}
 
+	if objectType.Name == data.Name {
+		return objectType, nil
+	}
+
 	objectTypeExist, err := svc.GetByName(ctx, data.Name)
 	if err != nil {
 		return nil, err
@@ -91,7 +95,16 @@ func (svc *objectTypeService) CreateMultiply(ctx context.Context, data *service.
 
 func (svc *objectTypeService) Delete(ctx context.Context, ids []int64) error {
 	for _, id := range ids {
-		err := svc.ObjectTypeRepository.DeleteByID(ctx, id)
+		objectTeplates, err := svc.ObjectTemplateRepository.GetByTypeID(ctx, id)
+		if err != nil {
+			return err
+		}
+
+		if len(objectTeplates) > 0 {
+			return errors.New("object type is used")
+		}
+
+		err = svc.ObjectTypeRepository.DeleteByID(ctx, id)
 		if err != nil {
 			return err
 		}

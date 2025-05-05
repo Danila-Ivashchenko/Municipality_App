@@ -17,18 +17,18 @@ const (
 )
 
 func (r *chapterRepository) execQuery(ctx context.Context, sqlQuery string, args ...any) error {
-	res, err := r.db.ExecContext(ctx, sqlQuery, args...)
+	_, err := r.db.ExecContext(ctx, sqlQuery, args...)
 	if err != nil {
 		return err
 	}
 
-	rowsAffected, err := res.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if rowsAffected == 0 {
-		return errors.New("now rows affected")
-	}
+	//rowsAffected, err := res.RowsAffected()
+	//if err != nil {
+	//	return err
+	//}
+	//if rowsAffected == 0 {
+	//	return errors.New("now rows affected")
+	//}
 
 	return nil
 }

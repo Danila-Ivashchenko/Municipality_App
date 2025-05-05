@@ -18,6 +18,7 @@ type ObjectService interface {
 	GetByNamesAndTemplateID(ctx context.Context, names []string, templateID int64) ([]entity.Object, error)
 
 	GetExByIDs(ctx context.Context, ids []int64) ([]entity.ObjectEx, error)
+	GetExByID(ctx context.Context, id int64) (*entity.ObjectEx, error)
 	GetExByTemplateID(ctx context.Context, templateID int64) ([]entity.ObjectEx, error)
 
 	DeleteMultiple(ctx context.Context, ids []int64, templateID int64) error
@@ -40,10 +41,10 @@ type CreateObjectData struct {
 }
 
 type CreateObjectLocationData struct {
-	Address   *string
-	Latitude  *float64
-	Longitude *float64
-	Geometry  *string
+	Address   *string  `json:"address"`
+	Latitude  *float64 `json:"latitude"`
+	Longitude *float64 `json:"longitude"`
+	Geometry  *string  `json:"geometry"`
 }
 
 type CreateMultiplyObjetsData struct {

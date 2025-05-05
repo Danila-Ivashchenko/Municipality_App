@@ -16,14 +16,16 @@ type ObjectTemplateEx struct {
 	Template   ObjectTemplate
 	Attributes []ObjectAttribute
 	Objects    []ObjectEx
+	ObjectType *ObjectType
 }
 
-func NewObjectTemplateEx(template ObjectTemplate, objectsEx []ObjectEx, attributes []ObjectAttribute) *ObjectTemplateEx {
+func NewObjectTemplateEx(template ObjectTemplate, objectsEx []ObjectEx, attributes []ObjectAttribute, objectType *ObjectType) *ObjectTemplateEx {
 	result := &ObjectTemplateEx{}
 
 	result.Template = template
 	result.Objects = objectsEx
 	result.Attributes = attributes
+	result.ObjectType = objectType
 
 	return result
 }

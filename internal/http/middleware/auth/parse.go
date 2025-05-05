@@ -46,3 +46,24 @@ func (m *Middleware) WithAuth() gin.HandlerFunc {
 		c.Next()
 	}
 }
+
+func (m *Middleware) WithAdmin() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		ctx := c.Request.Context()
+
+		user := context_paylod_parser.GetUserFromContext(ctx)
+		if user == nil {
+			response.Unauthorized(c, errors.New("user not auth"))
+			c.Abort()
+			return
+		}
+
+		if !user.IsAdmin {
+			response.Forbidden(c, errors.New("user not auth"))
+			c.Abort()
+			return
+		}
+
+		c.Request = c.Request.WithContext(ctx)
+	}
+}

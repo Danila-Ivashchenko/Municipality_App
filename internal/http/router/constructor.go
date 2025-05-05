@@ -4,12 +4,15 @@ import (
 	"github.com/gin-gonic/gin"
 	"go.uber.org/fx"
 	"municipality_app/internal/http/handler/chapter"
+	"municipality_app/internal/http/handler/entity"
+	"municipality_app/internal/http/handler/entity_type"
 	"municipality_app/internal/http/handler/municipality"
 	"municipality_app/internal/http/handler/object"
 	"municipality_app/internal/http/handler/object_type"
 	"municipality_app/internal/http/handler/partition"
 	"municipality_app/internal/http/handler/passport"
 	"municipality_app/internal/http/handler/region"
+	"municipality_app/internal/http/handler/route"
 	"municipality_app/internal/http/handler/user"
 	"municipality_app/internal/http/middleware/auth"
 	"municipality_app/internal/http/middleware/mun"
@@ -31,6 +34,10 @@ type RouterParams struct {
 	ObjectHandler       object.Handler
 	ChapterHandler      chapter.Handler
 	PartitionHandler    partition.Handler
+	RouteHandler        route.Handler
+
+	EntityTypeHandler entity_type.Handler
+	EntityHandler     entity.Handler
 }
 
 type Router struct {

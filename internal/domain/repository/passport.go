@@ -8,6 +8,7 @@ import (
 type PassportRepository interface {
 	Create(ctx context.Context, data *CreatePassportData) (*entity.Passport, error)
 	Update(ctx context.Context, data *entity.Passport) error
+	UpdateUpdatedAt(ctx context.Context, passportID int64) error
 	Delete(ctx context.Context, id int64) error
 
 	ChangeIsMainByID(ctx context.Context, id int64, isMain bool) error

@@ -16,5 +16,13 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+  nginx:
+    image: nginx:latest
+    container_name: mun-nginx
+    ports:
+      - "6060:80"
+    volumes:
+      - "./storage:/usr/share/nginx/html:ro"
+      - "./nginx.conf:/etc/nginx/conf.d/default.conf:ro"
 volumes:
   postgres_data:

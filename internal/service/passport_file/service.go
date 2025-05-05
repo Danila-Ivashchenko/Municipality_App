@@ -3,97 +3,69 @@ package passport_file
 import (
 	"context"
 	"fmt"
+	"github.com/google/uuid"
 	"municipality_app/internal/domain/entity"
+	"time"
 )
 
-func (svc *passportFileService) Create(ctx context.Context, passport *entity.PassportEx) error {
+func (svc *passportFileService) Create(ctx context.Context, municipality *entity.Municipality, passport *entity.PassportEx) (*entity.PassportFile, error) {
 	var (
 		err error
 	)
 
-	fileBuilder := NewFileBuilder()
+	fileName := fmt.Sprintf("Паспорт туризма муниципального образования %s %s.pdf", municipality.Name, passport.Name)
+	storagePass := "storage"
+	uniquePath := uuid.New().String() + ".pdf"
+	filePath := fmt.Sprintf("%s/%s", storagePass, uniquePath)
 
-	err = fileBuilder.UploadFont("./font/timesnewromanpsmt.ttf", "base")
+	err = svc.BuildPassportFile(filePath, passport)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	err = fileBuilder.WriteH1(passport.Name)
+	return svc.savePassportFile(ctx, fileName, filePath, passport.ID)
+}
+
+func (svc *passportFileService) GetByPassportID(ctx context.Context, passportID int64) ([]entity.PassportFile, error) {
+	return svc.PassportFileRepository.GetByPassportID(ctx, passportID)
+}
+
+func (svc *passportFileService) GetLastByPassportID(ctx context.Context, passportID int64) (*entity.PassportFile, error) {
+	passPortFile, err := svc.PassportFileRepository.GetLastByPassportID(ctx, passportID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	for i, chapter := range passport.Chapters {
-		err = fileBuilder.WriteH2(fmt.Sprintf("%d ", i+1) + chapter.Name)
-		if err != nil {
-			return err
-		}
+	if passPortFile != nil {
+		storageBaseURL := svc.Config.GetFileStorageBaseURL()
 
-		err = fileBuilder.WriteCommonText(chapter.Text)
-		if err != nil {
-			return err
-		}
-
-		for j, partition := range chapter.Partitions {
-			var (
-				columns          []string
-				rows             [][]string
-				attributeToOrder = make(map[int64]int)
-			)
-
-			err = fileBuilder.WriteH3(fmt.Sprintf("%d.%d ", i+1, j+1) + partition.Name)
-			if err != nil {
-				return err
-			}
-			err = fileBuilder.WriteCommonText(partition.Text)
-			if err != nil {
-				return err
-			}
-
-			columns = append(columns, "Название")
-
-			for _, templateEx := range partition.Objects {
-				for _, attribute := range templateEx.Attributes {
-					if attribute.ToShow {
-						columns = append(columns, attribute.Name)
-						attributeToOrder[attribute.ID] = len(columns)
-					}
-				}
-
-				for _, object := range templateEx.Objects {
-					row := make([]string, len(columns))
-					row[0] = object.Name
-
-					for _, attribute := range object.AttributeValues {
-						order, exists := attributeToOrder[attribute.Value.ObjectAttributeID]
-						if !exists {
-							continue
-						}
-
-						row[order-1] = attribute.Value.Value
-					}
-
-					rows = append(rows, row)
-				}
-
-			}
-
-			err = fileBuilder.CreateTable(columns, rows)
-		}
+		fullPath := fmt.Sprintf("%s/%s", storageBaseURL, passPortFile.Path)
+		passPortFile.Path = fullPath
 	}
 
-	for c := 0; c < 50; c++ {
-		bigText := "Очень длинный текст, который должен автоматически переноситься на следующую строку. Очень длинный текст, который должен автоматически переноситься на следующую строку. Очень длинный текст, который должен автоматически переноситься на следующую строку. Очень длинный текст, который должен автоматически переноситься на следующую строку."
-		err = fileBuilder.WriteCommonText(bigText)
-		if err != nil {
-			return err
-		}
+	return passPortFile, nil
+}
+
+func (svc *passportFileService) savePassportFile(ctx context.Context, fileName, path string, passportID int64) (*entity.PassportFile, error) {
+	newPassportFile := &entity.PassportFile{
+		Path:       path,
+		PassportID: passportID,
+		FileName:   fileName,
+
+		CreateAt: time.Now().UTC(),
 	}
 
-	err = fileBuilder.Save("file.pdf")
+	passportFile, err := svc.PassportFileRepository.Create(ctx, newPassportFile)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	if passportFile != nil {
+		storageBaseURL := svc.Config.GetFileStorageBaseURL()
+
+		fullPath := fmt.Sprintf("%s/%s", storageBaseURL, passportFile.Path)
+		passportFile.Path = fullPath
+	}
+
+	return passportFile, nil
 }

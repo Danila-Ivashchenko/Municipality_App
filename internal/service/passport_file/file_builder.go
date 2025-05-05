@@ -114,6 +114,22 @@ func (f *FileBuilder) WriteCommonText(text string) error {
 	return f.WriteText(text, params)
 }
 
+func (f *FileBuilder) WriteTableNameText(text string) error {
+	alignment := Center
+	fontSize := CommonFontSize
+	padding := TableBottomMargin
+	useRedLine := true
+
+	params := &TextParams{
+		Alignment:  &alignment,
+		FontSize:   &fontSize,
+		LineSize:   &padding,
+		UseRedLine: &useRedLine,
+	}
+
+	return f.WriteText(text, params)
+}
+
 func (f *FileBuilder) WriteH1(text string) error {
 	alignment := Center
 	fontSize := H1
@@ -164,6 +180,10 @@ func (f *FileBuilder) WriteText(text string, params *TextParams) error {
 		useRedLine      = false
 	)
 
+	if len(text) == 0 {
+		return nil
+	}
+
 	if params.Alignment != nil {
 		alignment = *params.Alignment
 	}
@@ -191,7 +211,7 @@ func (f *FileBuilder) WriteText(text string, params *TextParams) error {
 	}
 
 	for i, line := range wrappedLines {
-		if i == len(wrappedLines)-1 {
+		if i == len(wrappedLines)-1 && alignment == Justify {
 			alignment = Right
 		}
 

@@ -1,4 +1,4 @@
-package object
+package entity
 
 import (
 	"go.uber.org/fx"

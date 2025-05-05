@@ -2,7 +2,6 @@ package service
 
 import (
 	"go.uber.org/fx"
-	"municipality_app/internal/data/repository/entity_template"
 	"municipality_app/internal/service/chapter"
 	"municipality_app/internal/service/entity"
 	"municipality_app/internal/service/entity_attribute"
@@ -14,6 +13,7 @@ import (
 	"municipality_app/internal/service/object"
 	"municipality_app/internal/service/object_attribute"
 	"municipality_app/internal/service/object_ex"
+	"municipality_app/internal/service/object_template"
 	"municipality_app/internal/service/object_to_partition"
 	"municipality_app/internal/service/object_type"
 	"municipality_app/internal/service/partition"
@@ -21,6 +21,8 @@ import (
 	"municipality_app/internal/service/passport_ex"
 	"municipality_app/internal/service/passport_file"
 	"municipality_app/internal/service/region"
+	"municipality_app/internal/service/route"
+	"municipality_app/internal/service/route_object"
 	"municipality_app/internal/service/user"
 	"municipality_app/internal/service/user_auth"
 )
@@ -41,6 +43,9 @@ var (
 		object_attribute.New,
 		object_ex.New,
 		object_to_partition.New,
+
+		route_object.New,
+		route.New,
 
 		entity_type.New,
 		entity.New,

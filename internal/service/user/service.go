@@ -36,6 +36,42 @@ func (svc userService) RegisterUser(ctx context.Context, data *service.CreateUse
 	return user, err
 }
 
+func (svc userService) UpdateUser(ctx context.Context, data *service.UpdateUserData) (*entity.User, error) {
+	userExists, err := svc.UserRepository.GetUserByID(ctx, data.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	if userExists == nil {
+		return nil, errors.New("user no found")
+	}
+
+	if data.Name != nil {
+		userExists.Name = *data.Name
+	}
+
+	if data.LastName != nil {
+		userExists.LastName = *data.LastName
+	}
+
+	if data.Email != nil && *data.Email != userExists.Email {
+		userFull, err := svc.UserRepository.GetUserFullByEmail(ctx, *data.Email)
+		if err != nil {
+			return nil, err
+		}
+
+		if userFull != nil {
+			return nil, errors.New("this email is already registered")
+		}
+
+		userExists.Email = *data.Email
+	}
+
+	user, err := svc.UserRepository.UpdateUser(ctx, userExists)
+
+	return user, err
+}
+
 func (svc userService) Login(ctx context.Context, data *service.UserLoginData) (*entity.UserAuthToken, error) {
 	userFull, err := svc.UserRepository.GetUserFullByEmail(ctx, data.Email)
 	if err != nil {
@@ -82,9 +118,13 @@ func (svc userService) ChangeUserIsAdmin(ctx context.Context, id int) error {
 	panic("implement me")
 }
 
-func (svc userService) ChangeUserPassword(ctx context.Context, data service.ChangeUserPasswordData) error {
-	//TODO implement me
-	panic("implement me")
+func (svc userService) ChangeUserPassword(ctx context.Context, data *service.ChangeUserPasswordData) error {
+	hashedPassword, err := hashPassword(data.Password)
+	if err != nil {
+		return err
+	}
+
+	return svc.UserRepository.ChangeUserPassword(ctx, data.UserID, hashedPassword)
 }
 
 func hashPassword(password string) (string, error) {

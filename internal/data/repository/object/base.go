@@ -10,7 +10,7 @@ import (
 
 const (
 	createObjectQuery = `INSERT INTO municipality_object (name, municipality_object_template_id, location_id, description) VALUES ($1, $2, $3, $4);`
-	updateObjectQuery = `UPDATE municipality_object SET name = $1, description = $2 WHERE id = $3`
+	updateObjectQuery = `UPDATE municipality_object SET name = $1, description = $2, location_id = $3 WHERE id = $4;`
 	selectObjectQuery = `SELECT id, name, municipality_object_template_id, location_id, description FROM municipality_object `
 	deleteObjectQuery = "DELETE FROM municipality_object WHERE id = $1"
 )

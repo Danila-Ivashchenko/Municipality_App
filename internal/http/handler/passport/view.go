@@ -61,7 +61,8 @@ type passportExView struct {
 	IsMain    bool      `json:"is_main"`
 	IsHidden  bool      `json:"is_hidden"`
 
-	Chapters []view.ChapterExView `json:"chapters"`
+	Chapters     []view.ChapterExView   `json:"chapters"`
+	PassportFile *view.PassportFileView `json:"passport_file"`
 }
 
 func newPassportExView(i *entity.PassportEx) *passportExView {
@@ -76,6 +77,7 @@ func newPassportExView(i *entity.PassportEx) *passportExView {
 		UpdatedAt:      i.UpdatedAt,
 		IsMain:         i.IsMain,
 		IsHidden:       i.IsHidden,
+		PassportFile:   view.NewPassportFileView(i.PassportFile),
 	}
 
 	for _, ch := range i.Chapters {

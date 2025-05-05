@@ -3,10 +3,11 @@ package view
 import "municipality_app/internal/domain/entity"
 
 type EntityTemplateExView struct {
-	ID             int64  `json:"id"`
-	Name           string `json:"name"`
-	MunicipalityID int64  `json:"municipality_id"`
-	EntityType     int64  `json:"entity_type"`
+	ID             int64           `json:"id"`
+	Name           string          `json:"name"`
+	MunicipalityID int64           `json:"municipality_id"`
+	EntityTypeID   int64           `json:"entity_type_id"`
+	EntityType     *EntityTypeView `json:"entity_type"`
 
 	Entities   []EntityView          `json:"entities"`
 	Attributes []EntityAttributeView `json:"attributes"`
@@ -17,7 +18,8 @@ func NewEntityTemplateExView(i *entity.EntityTemplateEx) *EntityTemplateExView {
 		ID:             i.Template.ID,
 		Name:           i.Template.Name,
 		MunicipalityID: i.Template.MunicipalityID,
-		EntityType:     i.Template.EntityTypeID,
+		EntityTypeID:   i.Template.EntityTypeID,
+		EntityType:     NewEntityTypeView(i.EntityType),
 	}
 
 	for _, obj := range i.Entities {

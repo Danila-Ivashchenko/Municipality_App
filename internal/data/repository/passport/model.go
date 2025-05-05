@@ -5,23 +5,7 @@ import (
 	sql_common "municipality_app/internal/common/data/sql"
 	"municipality_app/internal/domain/entity"
 	"municipality_app/internal/domain/repository"
-	"time"
 )
-
-type Passport struct {
-	ID             int64
-	Name           string
-	MunicipalityID int64
-
-	Description  string
-	Year         string
-	RevisionCode string
-
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	IsMain    bool
-	IsHidden  bool
-}
 
 type passportModel struct {
 	ID             sql.NullInt64

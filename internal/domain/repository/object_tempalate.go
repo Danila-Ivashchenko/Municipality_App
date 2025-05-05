@@ -10,6 +10,7 @@ type ObjectTemplateRepository interface {
 	Update(ctx context.Context, data *entity.ObjectTemplate) (*entity.ObjectTemplate, error)
 
 	GetByMunicipalityID(ctx context.Context, municipalityID int64) ([]entity.ObjectTemplate, error)
+	GetByTypeID(ctx context.Context, typeID int64) ([]entity.ObjectTemplate, error)
 	GetByNameAndMunicipalityID(ctx context.Context, name string, municipalityID int64) (*entity.ObjectTemplate, error)
 	GetByIDAndMunicipalityID(ctx context.Context, id, municipalityID int64) (*entity.ObjectTemplate, error)
 

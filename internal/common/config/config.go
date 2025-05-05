@@ -19,12 +19,13 @@ func addConfigFile(file string) int {
 }
 
 type Config struct {
-	postgresUser    string
-	postgresPass    string
-	postgresHost    string
-	postgresPort    string
-	postgresDB      string
-	postgresSSLMode string
+	postgresUser       string
+	postgresPass       string
+	postgresHost       string
+	postgresPort       string
+	postgresDB         string
+	postgresSSLMode    string
+	storageFileBaseURL string
 
 	env string
 
@@ -38,6 +39,10 @@ func (c *Config) GetPsqlURL() string {
 
 func (c *Config) GetHTTPPort() string {
 	return c.httpPort
+}
+
+func (c *Config) GetFileStorageBaseURL() string {
+	return c.storageFileBaseURL
 }
 
 func (c *Config) GetEnv() string {
@@ -61,14 +66,15 @@ func GetConfig() *Config {
 		}
 	}
 	cfg := &Config{
-		postgresUser:    "",
-		postgresPass:    "",
-		postgresHost:    "localhost",
-		postgresPort:    "5432",
-		postgresDB:      "",
-		env:             "local",
-		postgresSSLMode: "disable",
-		httpHost:        "localhost",
+		postgresUser:       "",
+		postgresPass:       "",
+		postgresHost:       "localhost",
+		postgresPort:       "5432",
+		postgresDB:         "",
+		env:                "local",
+		postgresSSLMode:    "disable",
+		httpHost:           "localhost",
+		storageFileBaseURL: "http://localhost:6060",
 	}
 
 	user := os.Getenv("POSTGRES_USER")
@@ -80,6 +86,7 @@ func GetConfig() *Config {
 	env := os.Getenv("ENV")
 	httpPort := os.Getenv("HTTP_PORT")
 	httpHost := os.Getenv("HTTP_HOST")
+	storageFileBaseURL := os.Getenv("FILE_STORAGE_BASE_URL")
 
 	if env != "" {
 		cfg.env = env
@@ -107,6 +114,9 @@ func GetConfig() *Config {
 	}
 	if ssl != "" {
 		cfg.postgresSSLMode = ssl
+	}
+	if storageFileBaseURL != "" {
+		cfg.storageFileBaseURL = storageFileBaseURL
 	}
 
 	fmt.Println(cfg.GetPsqlURL())

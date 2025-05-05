@@ -145,6 +145,13 @@ func (svc *passportService) Update(ctx context.Context, data *service.UpdatePass
 		passport.IsHidden = *data.IsHidden
 	}
 
+	if data.IsMain != nil && *data.IsMain {
+		err = svc.MakeMainPassportToMunicipality(ctx, data.ID, data.MunicipalityID)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	if !updated {
 		return passport, nil
 	}
@@ -155,6 +162,10 @@ func (svc *passportService) Update(ctx context.Context, data *service.UpdatePass
 	}
 
 	return passport, nil
+}
+
+func (svc *passportService) UpdatedAt(ctx context.Context, passportID int64) error {
+	return svc.PassportRepository.UpdateUpdatedAt(ctx, passportID)
 }
 
 func (svc *passportService) Delete(ctx context.Context, id, municipalityID int64) error {

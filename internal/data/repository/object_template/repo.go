@@ -46,6 +46,10 @@ func (r *objectTemplateRepository) GetByMunicipalityID(ctx context.Context, muni
 	return r.fetchRowsWithCondition(ctx, "municipality_id = $1", municipalityID)
 }
 
+func (r *objectTemplateRepository) GetByTypeID(ctx context.Context, typeID int64) ([]entity.ObjectTemplate, error) {
+	return r.fetchRowsWithCondition(ctx, "object_type_id = $1", typeID)
+}
+
 func (r *objectTemplateRepository) GetByNameAndMunicipalityID(ctx context.Context, name string, municipalityID int64) (*entity.ObjectTemplate, error) {
 	return r.fetchRowWithCondition(ctx, "name = $1 AND municipality_id = $2", name, municipalityID)
 }
@@ -59,7 +63,7 @@ func (r *objectTemplateRepository) GetByID(ctx context.Context, id int64) (*enti
 }
 
 func (r *objectTemplateRepository) GetByIDs(ctx context.Context, ids []int64) ([]entity.ObjectTemplate, error) {
-	return r.fetchRowsWithCondition(ctx, "id = ANY($1)", sql_common.NewNullInt64Array(ids))
+	return r.fetchRowsWithCondition(ctx, "id = ANY($1) ORDER BY id ASC", sql_common.NewNullInt64Array(ids))
 }
 
 func (r *objectTemplateRepository) Delete(ctx context.Context, id int64) error {

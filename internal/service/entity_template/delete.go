@@ -1,4 +1,4 @@
-package object_template
+package entity_template
 
 import (
 	"context"

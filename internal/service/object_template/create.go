@@ -49,5 +49,10 @@ func (svc *objectTemplateService) Create(ctx context.Context, data *service.Crea
 		attributes = append(attributes, *attribute)
 	}
 
-	return entity.NewObjectTemplateEx(*template, nil, attributes), nil
+	objectType, err := svc.ObjectTypeService.GetByID(ctx, data.ObjectType)
+	if err != nil {
+		return nil, err
+	}
+
+	return entity.NewObjectTemplateEx(*template, nil, attributes, objectType), nil
 }

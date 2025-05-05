@@ -33,6 +33,10 @@ func SetEntityTemplateToContext(ctx context.Context, entityTemplate *entity.Enti
 	return context.WithValue(ctx, EntityTemplatePayloadKey, entityTemplate)
 }
 
+func SetRouteToContext(ctx context.Context, route *entity.Route) context.Context {
+	return context.WithValue(ctx, RoutePayloadKey, route)
+}
+
 func SetUserAuthTokenToContext(ctx context.Context, userAuthToken *entity.UserAuthToken) context.Context {
 	return context.WithValue(ctx, UserAuthTokenPayloadKey, userAuthToken)
 }
@@ -98,6 +102,15 @@ func GetEntityTemplateFromContext(ctx context.Context) *entity.EntityTemplate {
 	}
 
 	return entityTemplateValue
+}
+
+func GetRouteFromContext(ctx context.Context) *entity.Route {
+	routeValue, ok := ctx.Value(RoutePayloadKey).(*entity.Route)
+	if !ok {
+		return nil
+	}
+
+	return routeValue
 }
 
 func GetUserAuthTokenFromContext(ctx context.Context) *entity.UserAuthToken {

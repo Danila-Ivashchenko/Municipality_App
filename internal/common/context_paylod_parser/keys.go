@@ -9,4 +9,5 @@ const (
 	PartitionContextPayloadKey    = "partition"
 	ObjectTemplatePayloadKey      = "object_template"
 	EntityTemplatePayloadKey      = "entity_template"
+	RoutePayloadKey               = "route"
 )

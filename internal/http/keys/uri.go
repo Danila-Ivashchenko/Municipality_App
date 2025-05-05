@@ -7,6 +7,7 @@ const (
 	PartitionID       = "partition_id"
 	ObjectTemplateID  = "object_template_id"
 	EntityTemplateID  = "entity_template_id"
+	RouteID           = "route_id"
 )
 
 func NewUriKeyPlaceHolder(key string) string {

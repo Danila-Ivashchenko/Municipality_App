@@ -16,7 +16,8 @@ type UserService interface {
 	BlockUserByID(ctx context.Context, id int) error
 
 	ChangeUserIsAdmin(ctx context.Context, id int) error
-	ChangeUserPassword(ctx context.Context, data ChangeUserPasswordData) error
+	ChangeUserPassword(ctx context.Context, data *ChangeUserPasswordData) error
+	UpdateUser(ctx context.Context, data *UpdateUserData) (*entity.User, error)
 }
 
 type CreateUserData struct {
@@ -30,12 +31,17 @@ type CreateUserData struct {
 	Password string
 }
 
-type ChangeUserPasswordData struct {
-	Login string
-	Email string
+type UpdateUserData struct {
+	ID       int64
+	Name     *string
+	LastName *string
+	Email    *string
+}
 
-	Password        string
-	PasswordConfirm string
+type ChangeUserPasswordData struct {
+	UserID int64
+
+	Password string
 }
 
 type UserLoginData struct {

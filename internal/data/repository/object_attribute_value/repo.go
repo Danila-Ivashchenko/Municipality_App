@@ -57,15 +57,15 @@ func (r *repo) Update(ctx context.Context, obj *entity.ObjectAttributeValue) (*e
 }
 
 func (r *repo) GetByAttributeID(ctx context.Context, attributeID int64) ([]entity.ObjectAttributeValue, error) {
-	return r.fetchRowsWithCondition(ctx, "object_attribute_id = $1", attributeID)
+	return r.fetchRowsWithCondition(ctx, "object_attribute_id = $1 ORDER BY id ASC", attributeID)
 }
 
 func (r *repo) GetByObjectID(ctx context.Context, object int64) ([]entity.ObjectAttributeValue, error) {
-	return r.fetchRowsWithCondition(ctx, "object_id = $1", object)
+	return r.fetchRowsWithCondition(ctx, "object_id = $1 ORDER BY id ASC", object)
 }
 
 func (r *repo) GetByIDs(ctx context.Context, ids []int64) ([]entity.ObjectAttributeValue, error) {
-	return r.fetchRowsWithCondition(ctx, "id = ANY($1)", sql_common.NewNullInt64Array(ids))
+	return r.fetchRowsWithCondition(ctx, "id = ANY($1) ORDER BY id ASC", sql_common.NewNullInt64Array(ids))
 }
 
 func (r *repo) GetByAttributeIDAndObjectID(ctx context.Context, attributeID, objectID int64) (*entity.ObjectAttributeValue, error) {

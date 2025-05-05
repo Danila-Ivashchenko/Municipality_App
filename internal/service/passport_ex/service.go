@@ -5,6 +5,7 @@ import (
 	"errors"
 	"municipality_app/internal/domain/entity"
 	"municipality_app/internal/domain/service"
+	"sort"
 )
 
 func (svc *passportExService) GetByIDAndMunicipalityID(ctx context.Context, id, municipalityID int64) (*entity.PassportEx, error) {
@@ -22,7 +23,12 @@ func (svc *passportExService) GetByIDAndMunicipalityID(ctx context.Context, id, 
 		return nil, err
 	}
 
-	return entity.NewPassportEx(passport, chaptersEx), nil
+	passportFile, err := svc.PassportFileService.GetLastByPassportID(ctx, passport.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	return entity.NewPassportEx(passport, chaptersEx, passportFile), nil
 }
 
 func (svc *passportExService) GetChaptersEx(ctx context.Context, passportID int64) ([]entity.ChapterEx, error) {
@@ -47,6 +53,10 @@ func (svc *passportExService) GetChaptersEx(ctx context.Context, passportID int6
 		}
 	}
 
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].OrderNumber < result[j].OrderNumber
+	})
+
 	return result, nil
 }
 
@@ -64,6 +74,10 @@ func (svc *passportExService) GetChapterEx(ctx context.Context, chapterID, passp
 	if err != nil {
 		return nil, err
 	}
+
+	sort.Slice(partitionsEx, func(i, j int) bool {
+		return partitionsEx[i].OrderNumber < partitionsEx[j].OrderNumber
+	})
 
 	return entity.NewChapterExPtr(chapters, partitionsEx), nil
 }
@@ -169,4 +183,8 @@ func (svc *passportExService) UpdateChapterEx(ctx context.Context, data *service
 	}
 
 	return entity.NewChapterExPtr(chapter, partitions), nil
+}
+
+func (svc *passportExService) DeleteChapterEx(ctx context.Context, passportID, chapterID int64) error {
+	return svc.ChapterService.DeleteToPassport(ctx, []int64{chapterID}, passportID)
 }

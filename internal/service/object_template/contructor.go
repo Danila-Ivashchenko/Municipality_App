@@ -14,6 +14,7 @@ type ServiceParams struct {
 
 	ObjectAttributeService service.ObjectAttributeService
 	ObjectService          service.ObjectService
+	ObjectTypeService      service.ObjectTypeService
 }
 
 type objectTemplateService struct {

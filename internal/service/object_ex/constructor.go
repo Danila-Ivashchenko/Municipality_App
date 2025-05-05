@@ -11,6 +11,7 @@ type ServiceParams struct {
 	ObjectService          service.ObjectService
 	ObjectTemplateService  service.ObjectTemplateService
 	ObjectAttributeService service.ObjectAttributeService
+	ObjectTypeService      service.ObjectTypeService
 }
 
 type objectExService struct {

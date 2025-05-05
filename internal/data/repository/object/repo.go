@@ -34,7 +34,7 @@ func (r *objectTemplateRepository) Create(ctx context.Context, data *repository.
 func (r *objectTemplateRepository) Update(ctx context.Context, data *entity.Object) (*entity.Object, error) {
 	m := newModelObject(data)
 
-	err := r.execQuery(ctx, updateObjectQuery, m.Name, m.Description, m.ID)
+	err := r.execQuery(ctx, updateObjectQuery, m.Name, m.Description, m.LocationID, m.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -43,7 +43,7 @@ func (r *objectTemplateRepository) Update(ctx context.Context, data *entity.Obje
 }
 
 func (r *objectTemplateRepository) GetByTemplateID(ctx context.Context, templateID int64) ([]entity.Object, error) {
-	return r.fetchRowsWithCondition(ctx, "municipality_object_template_id = $1", templateID)
+	return r.fetchRowsWithCondition(ctx, "municipality_object_template_id = $1 ORDER BY id ASC", templateID)
 }
 
 func (r *objectTemplateRepository) GetByTemplateIDAndName(ctx context.Context, name string, templateID int64) (*entity.Object, error) {
@@ -51,11 +51,11 @@ func (r *objectTemplateRepository) GetByTemplateIDAndName(ctx context.Context, n
 }
 
 func (r *objectTemplateRepository) GetByTemplateIDAndNames(ctx context.Context, names []string, templateID int64) ([]entity.Object, error) {
-	return r.fetchRowsWithCondition(ctx, "municipality_object_template_id = $1 and name = ANY($2)", templateID, sql_common.NewNullStringArray(names))
+	return r.fetchRowsWithCondition(ctx, "municipality_object_template_id = $1 and name = ANY($2) ORDER BY id ASC", templateID, sql_common.NewNullStringArray(names))
 }
 
 func (r *objectTemplateRepository) GetByIDsAndTemplateID(ctx context.Context, ids []int64, templateID int64) ([]entity.Object, error) {
-	return r.fetchRowsWithCondition(ctx, "municipality_object_template_id = $1 and id = ANY($2)", templateID, sql_common.NewNullInt64Array(ids))
+	return r.fetchRowsWithCondition(ctx, "municipality_object_template_id = $1 and id = ANY($2) ORDER BY id ASC", templateID, sql_common.NewNullInt64Array(ids))
 }
 
 func (r *objectTemplateRepository) GetByID(ctx context.Context, id int64) (*entity.Object, error) {
@@ -63,7 +63,7 @@ func (r *objectTemplateRepository) GetByID(ctx context.Context, id int64) (*enti
 }
 
 func (r *objectTemplateRepository) GetByIDs(ctx context.Context, ids []int64) ([]entity.Object, error) {
-	return r.fetchRowsWithCondition(ctx, "id = ANY($1)", sql_common.NewNullInt64Array(ids))
+	return r.fetchRowsWithCondition(ctx, "id = ANY($1) ORDER BY id ASC", sql_common.NewNullInt64Array(ids))
 }
 
 func (r *objectTemplateRepository) Delete(ctx context.Context, id int64) error {

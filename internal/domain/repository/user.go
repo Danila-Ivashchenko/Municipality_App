@@ -14,6 +14,8 @@ type UserRepository interface {
 
 	GetUserByEmail(ctx context.Context, email string) (*entity.User, error)
 	GetUserFullByEmail(ctx context.Context, email string) (*entity.UserFull, error)
+
+	ChangeUserPassword(ctx context.Context, userID int64, password string) error
 }
 
 type CreateUserData struct {

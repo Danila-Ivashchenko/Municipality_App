@@ -72,7 +72,7 @@ type TableCell struct {
 	Padding float64
 }
 
-func (f *FileBuilder) CreateTable(head []string, rows [][]string) error {
+func (f *FileBuilder) CreateTable(tableName string, head []string, rows [][]string) error {
 	var (
 		headCells []TableCell
 	)
@@ -90,6 +90,8 @@ func (f *FileBuilder) CreateTable(head []string, rows [][]string) error {
 			Padding: TablePadding,
 		})
 	}
+
+	f.WriteTableNameText(tableName)
 
 	err := f.CreateRow(headCells)
 	if err != nil {

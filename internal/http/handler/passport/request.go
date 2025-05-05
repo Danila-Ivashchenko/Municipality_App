@@ -24,10 +24,11 @@ type UpdatePassportData struct {
 }
 
 type reqUpdatePassport struct {
-	Name        *string
-	Description *string
-	Year        *string
-	IsHidden    *bool
+	Name        *string `json:"name"`
+	Description *string `json:"description"`
+	Year        *string `json:"year"`
+	IsHidden    *bool   `json:"is_hidden"`
+	IsMain      *bool   `json:"is_main"`
 }
 
 func (req *reqUpdatePassport) Validate() error {
@@ -48,6 +49,7 @@ func (req *reqUpdatePassport) Convert(id, municipalityID int64) *service.UpdateP
 		Description:    req.Description,
 		Year:           req.Year,
 		IsHidden:       req.IsHidden,
+		IsMain:         req.IsMain,
 	}
 }
 
