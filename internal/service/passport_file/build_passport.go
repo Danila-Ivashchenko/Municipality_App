@@ -16,6 +16,10 @@ func (svc *passportFileService) BuildPassportFile(path string, passport *entity.
 	if err != nil {
 		return err
 	}
+	err = fileBuilder.UploadBoldFont("./font/timesnewromanpsmt_bold.ttf", "bold")
+	if err != nil {
+		return err
+	}
 
 	err = fileBuilder.WriteH1(passport.Name)
 	if err != nil {

@@ -2,19 +2,19 @@ package user
 
 import (
 	"context"
-	"database/sql"
+	"municipality_app/internal/common/sql_handler"
 	"municipality_app/internal/domain/entity"
 	"municipality_app/internal/domain/repository"
 	"municipality_app/internal/infrastructure/db"
 )
 
 type userRepository struct {
-	db *sql.DB
+	handler sql_handler.Handler
 }
 
 func New(m db.DataBaseManager) repository.UserRepository {
 	repo := &userRepository{
-		db: m.GetDB(),
+		handler: sql_handler.NewHandler(m.GetDB()),
 	}
 	return repo
 }
@@ -26,7 +26,7 @@ func (r userRepository) CreateUser(ctx context.Context, data *repository.CreateU
 
 	m := newCreateUserModel(data)
 
-	row := r.db.QueryRowContext(ctx, createUserQuery, m.Email, m.Name, m.LastName, m.Password)
+	row := r.handler.QueryRowContext(ctx, createUserQuery, m.Email, m.Name, m.LastName, m.Password)
 	if row.Err() != nil {
 		return nil, row.Err()
 	}
@@ -56,6 +56,14 @@ func (r userRepository) ChangeUserPassword(ctx context.Context, userID int64, pa
 	return r.exexUserQuery(ctx, changeUserPasswordQuery, password, userID)
 }
 
+func (r userRepository) ChangeUserAdmin(ctx context.Context, userID int64, isAdmin bool) error {
+	return r.exexUserQuery(ctx, changeUserAdminQuery, isAdmin, userID)
+}
+
+func (r userRepository) ChangeUserBlocked(ctx context.Context, userID int64, isBlocked bool) error {
+	return r.exexUserQuery(ctx, changeUserBlockedQuery, isBlocked, userID)
+}
+
 func (r userRepository) GetUserByID(ctx context.Context, id int64) (*entity.User, error) {
 	return r.fetchUserWithСondition(ctx, "id = $1", id)
 }
@@ -66,6 +74,10 @@ func (r userRepository) GetUserFullByID(ctx context.Context, id int64) (*entity.
 
 func (r userRepository) GetUserByEmail(ctx context.Context, email string) (*entity.User, error) {
 	return r.fetchUserWithСondition(ctx, "email = $1", email)
+}
+
+func (r userRepository) GetAllUsers(ctx context.Context) ([]entity.User, error) {
+	return r.fetchUsers(ctx, selectUserQuery)
 }
 
 func (r userRepository) GetUserFullByEmail(ctx context.Context, email string) (*entity.UserFull, error) {

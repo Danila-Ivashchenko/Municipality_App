@@ -39,7 +39,7 @@ const (
 )
 
 func (r *routeObjectRepository) execQuery(ctx context.Context, sqlQuery string, args ...any) error {
-	_, err := r.db.ExecContext(ctx, sqlQuery, args...)
+	_, err := r.handler.ExecContext(ctx, sqlQuery, args...)
 	if err != nil {
 		return err
 	}
@@ -54,7 +54,7 @@ func (r *routeObjectRepository) fetchRowWithCondition(ctx context.Context, condi
 func (r *routeObjectRepository) fetchRow(ctx context.Context, sqlQuery string, args ...any) (*entity.RouteObject, error) {
 	m := &model{}
 
-	row := r.db.QueryRowContext(ctx, sqlQuery, args...)
+	row := r.handler.QueryRowContext(ctx, sqlQuery, args...)
 	if row.Err() != nil {
 		return nil, row.Err()
 	}
@@ -80,7 +80,7 @@ func (r *routeObjectRepository) fetchRows(ctx context.Context, sqlQuery string, 
 		result []entity.RouteObject
 	)
 
-	rows, err := r.db.QueryContext(ctx, sqlQuery, args...)
+	rows, err := r.handler.QueryContext(ctx, sqlQuery, args...)
 	if err != nil {
 		return nil, err
 	}

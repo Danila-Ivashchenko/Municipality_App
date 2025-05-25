@@ -2,20 +2,20 @@ package location
 
 import (
 	"context"
-	"database/sql"
 	sql_common "municipality_app/internal/common/data/sql"
+	"municipality_app/internal/common/sql_handler"
 	"municipality_app/internal/domain/entity"
 	"municipality_app/internal/domain/repository"
 	"municipality_app/internal/infrastructure/db"
 )
 
 type locationRepository struct {
-	db *sql.DB
+	handler sql_handler.Handler
 }
 
 func New(m db.DataBaseManager) repository.LocationRepository {
 	repo := &locationRepository{
-		db: m.GetDB(),
+		handler: sql_handler.NewHandler(m.GetDB()),
 	}
 	return repo
 }
@@ -23,7 +23,7 @@ func New(m db.DataBaseManager) repository.LocationRepository {
 func (r *locationRepository) Create(ctx context.Context, data *repository.CreateLocationData) (*entity.Location, error) {
 	m := newModelFromCreateData(data)
 
-	row := r.db.QueryRowContext(ctx, createLocationQuery, m.Address, m.Latitude, m.Longitude, m.Geometry)
+	row := r.handler.QueryRowContext(ctx, createLocationQuery, m.Address, m.Latitude, m.Longitude, m.Geometry)
 	if row.Err() != nil {
 		return nil, row.Err()
 	}

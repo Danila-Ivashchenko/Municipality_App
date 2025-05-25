@@ -3,6 +3,7 @@ package object_type
 import (
 	"context"
 	"errors"
+	"municipality_app/internal/domain/core_errors"
 	"municipality_app/internal/domain/entity"
 	"municipality_app/internal/domain/repository"
 	"municipality_app/internal/domain/service"
@@ -30,7 +31,7 @@ func (svc *objectTypeService) Update(ctx context.Context, data *service.UpdateOb
 	}
 
 	if objectType == nil {
-		return nil, errors.New("object type does not exist")
+		return nil, core_errors.ObjectTypeNotFound
 	}
 
 	if objectType.Name == data.Name {
@@ -43,7 +44,7 @@ func (svc *objectTypeService) Update(ctx context.Context, data *service.UpdateOb
 	}
 
 	if objectTypeExist != nil {
-		return nil, errors.New("object type already exist")
+		return nil, core_errors.ObjectTypeNameIsUsed
 	}
 
 	objectType.Name = data.Name
@@ -63,7 +64,7 @@ func (svc *objectTypeService) CreateMultiply(ctx context.Context, data *service.
 
 	for _, d := range data.Data {
 		if _, ok := namesMap[d.Name]; ok {
-			return nil, errors.New("duplicate name")
+			return nil, core_errors.ObjectTypeNameIsUsed
 		}
 
 		names = append(names, d.Name)
@@ -76,7 +77,7 @@ func (svc *objectTypeService) CreateMultiply(ctx context.Context, data *service.
 	}
 
 	if len(objectsExists) > 0 {
-		return nil, errors.New("duplicate name")
+		return nil, core_errors.ObjectTypeNameIsUsed
 	}
 
 	for _, d := range data.Data {
@@ -95,16 +96,7 @@ func (svc *objectTypeService) CreateMultiply(ctx context.Context, data *service.
 
 func (svc *objectTypeService) Delete(ctx context.Context, ids []int64) error {
 	for _, id := range ids {
-		objectTeplates, err := svc.ObjectTemplateRepository.GetByTypeID(ctx, id)
-		if err != nil {
-			return err
-		}
-
-		if len(objectTeplates) > 0 {
-			return errors.New("object type is used")
-		}
-
-		err = svc.ObjectTypeRepository.DeleteByID(ctx, id)
+		err := svc.ObjectTypeRepository.DeleteByID(ctx, id)
 		if err != nil {
 			return err
 		}

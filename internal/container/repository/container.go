@@ -25,6 +25,7 @@ import (
 	"municipality_app/internal/data/repository/route_object"
 	"municipality_app/internal/data/repository/user"
 	"municipality_app/internal/data/repository/user_auth_token"
+	"municipality_app/internal/data/repository/user_permissions"
 )
 
 var (
@@ -55,5 +56,7 @@ var (
 		route_object.New,
 
 		passport_file.New,
+
+		user_permissions.New,
 	)
 )

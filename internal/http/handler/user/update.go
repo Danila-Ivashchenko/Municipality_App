@@ -21,11 +21,6 @@ func (h *Handler) Update(c *gin.Context) {
 		return
 	}
 
-	if validateErr := req.Validate(); validateErr != nil {
-		response.Error(c, validateErr)
-		return
-	}
-
 	data := req.Convert(user.ID)
 
 	user, err = h.Params.UserService.UpdateUser(ctx, data)

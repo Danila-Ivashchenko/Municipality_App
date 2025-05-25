@@ -2,20 +2,20 @@ package route_object
 
 import (
 	"context"
-	"database/sql"
 	sql_common "municipality_app/internal/common/data/sql"
+	"municipality_app/internal/common/sql_handler"
 	"municipality_app/internal/domain/entity"
 	"municipality_app/internal/domain/repository"
 	"municipality_app/internal/infrastructure/db"
 )
 
 type routeObjectRepository struct {
-	db *sql.DB
+	handler sql_handler.Handler
 }
 
 func New(m db.DataBaseManager) repository.RouteObjectRepository {
 	repo := &routeObjectRepository{
-		db: m.GetDB(),
+		handler: sql_handler.NewHandler(m.GetDB()),
 	}
 	return repo
 }
@@ -27,7 +27,7 @@ func (r *routeObjectRepository) Create(ctx context.Context, data *entity.RouteOb
 
 	m := newModel(data)
 
-	row := r.db.QueryRowContext(ctx, createRouteObjectQuery,
+	row := r.handler.QueryRowContext(ctx, createRouteObjectQuery,
 		m.RouteID,
 		m.Name,
 		m.OrderNumber,

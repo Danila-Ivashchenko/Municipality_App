@@ -16,6 +16,11 @@ type UserRepository interface {
 	GetUserFullByEmail(ctx context.Context, email string) (*entity.UserFull, error)
 
 	ChangeUserPassword(ctx context.Context, userID int64, password string) error
+
+	GetAllUsers(ctx context.Context) ([]entity.User, error)
+
+	ChangeUserBlocked(ctx context.Context, userID int64, isBlocked bool) error
+	ChangeUserAdmin(ctx context.Context, userID int64, isBlocked bool) error
 }
 
 type CreateUserData struct {

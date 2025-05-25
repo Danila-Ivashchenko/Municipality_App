@@ -16,7 +16,7 @@ const (
 )
 
 func (r *municipalityRepository) execQuery(ctx context.Context, sqlQuery string, args ...any) error {
-	res, err := r.db.ExecContext(ctx, sqlQuery, args...)
+	res, err := r.handler.ExecContext(ctx, sqlQuery, args...)
 	if err != nil {
 		return err
 	}
@@ -39,7 +39,7 @@ func (r *municipalityRepository) fetchRowWithCondition(ctx context.Context, cond
 func (r *municipalityRepository) fetchRow(ctx context.Context, sqlQuery string, args ...any) (*entity.Municipality, error) {
 	m := &municipalityModel{}
 
-	row := r.db.QueryRowContext(ctx, sqlQuery, args...)
+	row := r.handler.QueryRowContext(ctx, sqlQuery, args...)
 	if row.Err() != nil {
 		return nil, row.Err()
 	}
@@ -65,7 +65,7 @@ func (r *municipalityRepository) fetchRows(ctx context.Context, sqlQuery string,
 		result []entity.Municipality
 	)
 
-	rows, err := r.db.QueryContext(ctx, sqlQuery, args...)
+	rows, err := r.handler.QueryContext(ctx, sqlQuery, args...)
 	if err != nil {
 		return nil, err
 	}

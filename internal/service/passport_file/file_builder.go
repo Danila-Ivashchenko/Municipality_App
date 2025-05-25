@@ -1,6 +1,7 @@
 package passport_file
 
 import (
+	"fmt"
 	"github.com/signintech/gopdf"
 	"log/slog"
 	"strings"
@@ -40,6 +41,7 @@ type PageParams struct {
 	W              float64
 	H              float64
 	baseFontFamily string
+	boldFontFamily string
 }
 
 type FileBuilder struct {
@@ -85,9 +87,32 @@ func (f *FileBuilder) UploadFont(filepath, fontFamily string) error {
 	return nil
 }
 
+func (f *FileBuilder) UploadBoldFont(filepath, fontFamily string) error {
+	err := f.pdf.AddTTFFont(fontFamily, filepath)
+	if err != nil {
+		return err
+	}
+
+	if f.pageParams.boldFontFamily == "" {
+		f.pageParams.boldFontFamily = fontFamily
+	}
+
+	return nil
+}
+
 func (f *FileBuilder) SetFontSize(size float64) error {
 	err := f.pdf.SetFont(f.pageParams.baseFontFamily, "", size)
 	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (f *FileBuilder) SetBoldFontSize(size float64) error {
+	err := f.pdf.SetFont(f.pageParams.boldFontFamily, "", size)
+	if err != nil {
+		slog.Error(fmt.Sprintf("fail to set bold font: %s", err.Error()))
 		return err
 	}
 
@@ -132,13 +157,15 @@ func (f *FileBuilder) WriteTableNameText(text string) error {
 
 func (f *FileBuilder) WriteH1(text string) error {
 	alignment := Center
-	fontSize := H1
+	fontSize := CommonFontSize
 	padding := H1Padding
+	bold := true
 
 	params := &TextParams{
 		Alignment: &alignment,
 		FontSize:  &fontSize,
 		LineSize:  &padding,
+		Bold:      &bold,
 	}
 
 	return f.WriteText(text, params)
@@ -146,13 +173,15 @@ func (f *FileBuilder) WriteH1(text string) error {
 
 func (f *FileBuilder) WriteH2(text string) error {
 	alignment := Right
-	fontSize := H2
+	fontSize := CommonFontSize
 	padding := H2Padding
+	bold := true
 
 	params := &TextParams{
 		Alignment: &alignment,
 		FontSize:  &fontSize,
 		LineSize:  &padding,
+		Bold:      &bold,
 	}
 
 	return f.WriteText(text, params)
@@ -160,13 +189,15 @@ func (f *FileBuilder) WriteH2(text string) error {
 
 func (f *FileBuilder) WriteH3(text string) error {
 	alignment := Right
-	fontSize := H3
+	fontSize := CommonFontSize
 	padding := H3Padding
+	bold := true
 
 	params := &TextParams{
 		Alignment: &alignment,
 		FontSize:  &fontSize,
 		LineSize:  &padding,
+		Bold:      &bold,
 	}
 
 	return f.WriteText(text, params)
@@ -178,6 +209,7 @@ func (f *FileBuilder) WriteText(text string, params *TextParams) error {
 		fontSize        = CommonFontSize
 		currentLineSize = CommonPadding
 		useRedLine      = false
+		bold            = false
 	)
 
 	if len(text) == 0 {
@@ -200,12 +232,23 @@ func (f *FileBuilder) WriteText(text string, params *TextParams) error {
 		currentLineSize = *params.LineSize
 	}
 
-	err := f.SetFontSize(float64(fontSize))
-	if err != nil {
-		return err
+	if params.Bold != nil {
+		bold = *params.Bold
 	}
 
-	wrappedLines, err := f.pdf.SplitTextWithWordWrap(text, f.iterator.LineWidth())
+	if !bold {
+		err := f.SetFontSize(float64(fontSize))
+		if err != nil {
+			return err
+		}
+	} else {
+		err := f.SetBoldFontSize(float64(fontSize))
+		if err != nil {
+			return err
+		}
+	}
+
+	wrappedLines, err := f.pdf.SplitTextWithWordWrap(text, f.iterator.LineWidth()-RedLine)
 	if err != nil {
 		return err
 	}
@@ -287,7 +330,7 @@ func (f *FileBuilder) RightText(text string) {
 	f.pdf.SetXY(f.iterator.Position())
 	err = f.pdf.Text(text)
 	if err != nil {
-		slog.Warn("error writing text to pdf")
+		slog.Warn("core_errors writing text to pdf")
 	}
 }
 
@@ -301,7 +344,7 @@ func (f *FileBuilder) RightTextWithRedLine(text string) {
 
 	err = f.pdf.Text(text)
 	if err != nil {
-		slog.Warn("error writing text to pdf")
+		slog.Warn("core_errors writing text to pdf")
 	}
 }
 
@@ -325,7 +368,7 @@ func (f *FileBuilder) CenterText(text string) {
 	f.pdf.SetXY(f.iterator.WithXStep(step).Position())
 	err = f.pdf.Text(text)
 	if err != nil {
-		slog.Warn("error writing text to pdf")
+		slog.Warn("core_errors writing text to pdf")
 	}
 }
 
@@ -342,7 +385,7 @@ func (f *FileBuilder) JustifyText(text string) {
 	if len(words) < 2 {
 		err = f.pdf.Text(text)
 		if err != nil {
-			slog.Warn("error writing text to pdf")
+			slog.Warn("core_errors writing text to pdf")
 		}
 	}
 
@@ -358,7 +401,7 @@ func (f *FileBuilder) JustifyText(text string) {
 		wordWidth, _ := f.pdf.MeasureTextWidth(word)
 		err = f.pdf.Text(word)
 		if err != nil {
-			slog.Warn("error writing text to pdf")
+			slog.Warn("core_errors writing text to pdf")
 		}
 
 		f.pdf.SetXY(f.iterator.WithXStep(step + wordWidth).Position())
@@ -379,7 +422,7 @@ func (f *FileBuilder) JustifyTextWithRedLine(text string) {
 	if len(words) < 2 {
 		err = f.pdf.Text(text)
 		if err != nil {
-			slog.Warn("error writing text to pdf")
+			slog.Warn("core_errors writing text to pdf")
 		}
 	}
 
@@ -388,14 +431,14 @@ func (f *FileBuilder) JustifyTextWithRedLine(text string) {
 		totalWordWidth += lineWidth
 	}
 
-	spaceDelta := f.iterator.LineWidth() - totalWordWidth
+	spaceDelta := f.iterator.LineWidth() - totalWordWidth - RedLine
 	step = spaceDelta / float64(len(words)-1)
 
 	for _, word := range words {
 		wordWidth, _ := f.pdf.MeasureTextWidth(word)
 		err = f.pdf.Text(word)
 		if err != nil {
-			slog.Warn("error writing text to pdf")
+			slog.Warn("core_errors writing text to pdf")
 		}
 
 		f.pdf.SetXY(f.iterator.WithXStep(step + wordWidth).Position())

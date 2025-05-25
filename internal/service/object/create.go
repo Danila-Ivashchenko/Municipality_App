@@ -2,7 +2,7 @@ package object
 
 import (
 	"context"
-	"fmt"
+	"municipality_app/internal/domain/core_errors"
 	"municipality_app/internal/domain/entity"
 	"municipality_app/internal/domain/repository"
 	"municipality_app/internal/domain/service"
@@ -24,7 +24,7 @@ func (svc *objectService) CreateMultiply(ctx context.Context, data *service.Crea
 	for _, objectData := range data.Objects {
 		_, ok := uniqueNames[objectData.Name]
 		if ok {
-			return nil, fmt.Errorf("duplicate object name: %s", objectData.Name)
+			return nil, core_errors.ObjectNameIsUsed
 		}
 
 		uniqueNames[objectData.Name] = struct{}{}
@@ -37,64 +37,71 @@ func (svc *objectService) CreateMultiply(ctx context.Context, data *service.Crea
 	}
 
 	if len(objectExists) > 0 {
-		return nil, fmt.Errorf("duplicate object name: %s", objectExists[0].Name)
+		return nil, core_errors.ObjectNameIsUsed
 	}
 
-	for _, objectData := range data.Objects {
-		var (
-			locationCreateData *repository.CreateLocationData
-			location           *entity.Location
+	err = svc.Transactor.Execute(ctx, func(tx context.Context) error {
+		for _, objectData := range data.Objects {
+			var (
+				locationCreateData *repository.CreateLocationData
+				location           *entity.Location
 
-			locationID *int64
+				locationID *int64
 
-			objectRepoData *repository.CreateObjectData
-		)
+				objectRepoData *repository.CreateObjectData
+			)
 
-		if objectData.LocationData != nil {
-			locationCreateData = &repository.CreateLocationData{
-				Address:   objectData.LocationData.Address,
-				Latitude:  objectData.LocationData.Latitude,
-				Longitude: objectData.LocationData.Longitude,
-				Geometry:  objectData.LocationData.Geometry,
+			if objectData.LocationData != nil {
+				locationCreateData = &repository.CreateLocationData{
+					Address:   objectData.LocationData.Address,
+					Latitude:  objectData.LocationData.Latitude,
+					Longitude: objectData.LocationData.Longitude,
+					Geometry:  objectData.LocationData.Geometry,
+				}
+
+				location, err = svc.LocationRepository.Create(tx, locationCreateData)
+				if err != nil {
+					return err
+				}
+
+				locationID = &location.ID
 			}
 
-			location, err = svc.LocationRepository.Create(ctx, locationCreateData)
+			objectRepoData = &repository.CreateObjectData{
+				Name:             objectData.Name,
+				LocationID:       locationID,
+				ObjectTemplateID: data.ObjectTemplateID,
+				Description:      objectData.Description,
+			}
+
+			object, err := svc.ObjectRepository.Create(tx, objectRepoData)
 			if err != nil {
-				return nil, err
+				return err
 			}
 
-			locationID = &location.ID
+			createAttributeValuesData := service.CreateObjectAttributesData{
+				ObjectID:         object.ID,
+				ObjectTemplateID: object.ObjectTemplateID,
+				ValuesData:       objectData.AttributeValues,
+			}
+
+			_, err = svc.ObjectAttributeService.UpdateValues(tx, createAttributeValuesData)
+			if err != nil {
+				return err
+			}
+
+			attributeValues, err := svc.ObjectAttributeService.GetAttributesExByObjectID(tx, object.ID)
+			if err != nil {
+				return err
+			}
+
+			result = append(result, *entity.NewObjectExPtr(object, location, attributeValues))
 		}
 
-		objectRepoData = &repository.CreateObjectData{
-			Name:             objectData.Name,
-			LocationID:       locationID,
-			ObjectTemplateID: data.ObjectTemplateID,
-			Description:      objectData.Description,
-		}
-
-		object, err := svc.ObjectRepository.Create(ctx, objectRepoData)
-		if err != nil {
-			return nil, err
-		}
-
-		createAttributeValuesData := service.CreateObjectAttributesData{
-			ObjectID:         object.ID,
-			ObjectTemplateID: object.ObjectTemplateID,
-			ValuesData:       objectData.AttributeValues,
-		}
-
-		_, err = svc.ObjectAttributeService.UpdateValues(ctx, createAttributeValuesData)
-		if err != nil {
-			return nil, err
-		}
-
-		attributeValues, err := svc.ObjectAttributeService.GetAttributesExByObjectID(ctx, object.ID)
-		if err != nil {
-			return nil, err
-		}
-
-		result = append(result, *entity.NewObjectExPtr(object, location, attributeValues))
+		return nil
+	})
+	if err != nil {
+		return nil, err
 	}
 
 	return result, nil

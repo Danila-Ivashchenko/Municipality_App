@@ -2,20 +2,20 @@ package object_attribute_value
 
 import (
 	"context"
-	"database/sql"
 	sql_common "municipality_app/internal/common/data/sql"
+	"municipality_app/internal/common/sql_handler"
 	"municipality_app/internal/domain/entity"
 	"municipality_app/internal/domain/repository"
 	"municipality_app/internal/infrastructure/db"
 )
 
 type repo struct {
-	db *sql.DB
+	handler sql_handler.Handler
 }
 
 func New(m db.DataBaseManager) repository.ObjectAttributeValueRepository {
 	r := &repo{
-		db: m.GetDB(),
+		handler: sql_handler.NewHandler(m.GetDB()),
 	}
 	return r
 }
@@ -27,7 +27,7 @@ func (r *repo) Create(ctx context.Context, obj *entity.ObjectAttributeValue) (*e
 
 	m := newModel(obj)
 
-	row := r.db.QueryRowContext(ctx, createQuery, m.ObjectAttributeID, m.ObjectID, m.Value)
+	row := r.handler.QueryRowContext(ctx, createQuery, m.ObjectAttributeID, m.ObjectID, m.Value)
 	if row.Err() != nil {
 		return nil, row.Err()
 	}

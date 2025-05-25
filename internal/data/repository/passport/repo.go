@@ -2,8 +2,8 @@ package passport
 
 import (
 	"context"
-	"database/sql"
 	sql_common "municipality_app/internal/common/data/sql"
+	"municipality_app/internal/common/sql_handler"
 	"municipality_app/internal/domain/entity"
 	"municipality_app/internal/domain/repository"
 	"municipality_app/internal/infrastructure/db"
@@ -11,12 +11,12 @@ import (
 )
 
 type passportRepository struct {
-	db *sql.DB
+	handler sql_handler.Handler
 }
 
 func New(m db.DataBaseManager) repository.PassportRepository {
 	repo := &passportRepository{
-		db: m.GetDB(),
+		handler: sql_handler.NewHandler(m.GetDB()),
 	}
 	return repo
 }
@@ -84,4 +84,8 @@ func (r *passportRepository) GetMainByMunicipalityID(ctx context.Context, munici
 
 func (r *passportRepository) GetByRevisionCode(ctx context.Context, revisionCode string) (*entity.Passport, error) {
 	return r.fetchRowWithCondition(ctx, "revision_code = $1", revisionCode)
+}
+
+func (r *passportRepository) GetByID(ctx context.Context, id int64) (*entity.Passport, error) {
+	return r.fetchRowWithCondition(ctx, "id = $1", id)
 }

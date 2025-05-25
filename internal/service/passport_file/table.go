@@ -49,7 +49,7 @@ func (f *FileBuilder) WriteTextToCell(text string, x, y, width, fontSize float64
 		}
 		err = f.pdf.Text(row)
 		if err != nil {
-			slog.Warn("error writing text to pdf")
+			slog.Warn("core_errors writing text to pdf")
 		}
 
 		f.pdf.SetXY(f.iterator.Position())

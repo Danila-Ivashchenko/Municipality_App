@@ -2,20 +2,20 @@ package chapter
 
 import (
 	"context"
-	"database/sql"
 	sql_common "municipality_app/internal/common/data/sql"
+	"municipality_app/internal/common/sql_handler"
 	"municipality_app/internal/domain/entity"
 	"municipality_app/internal/domain/repository"
 	"municipality_app/internal/infrastructure/db"
 )
 
 type chapterRepository struct {
-	db *sql.DB
+	handler sql_handler.Handler
 }
 
 func New(m db.DataBaseManager) repository.ChapterRepository {
 	repo := &chapterRepository{
-		db: m.GetDB(),
+		handler: sql_handler.NewHandler(m.GetDB()),
 	}
 	return repo
 }

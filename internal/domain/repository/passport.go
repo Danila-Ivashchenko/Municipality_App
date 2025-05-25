@@ -22,6 +22,7 @@ type PassportRepository interface {
 	GetMainByMunicipalityID(ctx context.Context, municipalityID int64) (*entity.Passport, error)
 
 	GetByRevisionCode(ctx context.Context, revisionCode string) (*entity.Passport, error)
+	GetByID(ctx context.Context, id int64) (*entity.Passport, error)
 }
 
 type CreatePassportData struct {

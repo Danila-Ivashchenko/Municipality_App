@@ -2,6 +2,8 @@ package service
 
 import (
 	"context"
+	"municipality_app/internal/common/validator/field"
+	"municipality_app/internal/common/validator/validator"
 	"municipality_app/internal/domain/entity"
 )
 
@@ -35,6 +37,16 @@ type CreateRouteData struct {
 	Objects           *[]SetObjectToRoute
 }
 
+func (d *CreateRouteData) Validate() error {
+	v := validator.Validator{}
+
+	v.AddField(
+		field.NewStringField("Название", d.Name).Required().Bigger(4),
+	)
+
+	return v.Validate()
+}
+
 type UpdateRouteData struct {
 	ID                int64
 	Name              *string
@@ -49,6 +61,18 @@ type UpdateRouteData struct {
 	RouteEquipment    *string
 	Geometry          *string
 	Objects           *[]SetObjectToRoute
+}
+
+func (d *UpdateRouteData) Validate() error {
+	v := validator.Validator{}
+
+	if d.Name != nil {
+		v.AddField(
+			field.NewStringField("Название", *d.Name).Required().Bigger(4),
+		)
+	}
+
+	return v.Validate()
 }
 
 type DeleteRoutesToPartitionData struct {

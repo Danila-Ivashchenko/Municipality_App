@@ -2,6 +2,7 @@ package entity_template
 
 import (
 	"go.uber.org/fx"
+	"municipality_app/internal/common/transactor"
 	"municipality_app/internal/domain/repository"
 	"municipality_app/internal/domain/service"
 )
@@ -15,6 +16,8 @@ type ServiceParams struct {
 	EntityAttributeService service.EntityAttributeService
 	EntityService          service.EntityService
 	EntityTypeService      service.EntityTypeService
+
+	Transactor transactor.Transactor
 }
 
 type objectTemplateService struct {

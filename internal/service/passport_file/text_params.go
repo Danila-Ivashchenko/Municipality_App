@@ -5,4 +5,5 @@ type TextParams struct {
 	FontSize   *int
 	LineSize   *float64
 	UseRedLine *bool
+	Bold       *bool
 }

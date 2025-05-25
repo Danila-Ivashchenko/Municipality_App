@@ -12,11 +12,18 @@ func (svc *objectService) DeleteMultiple(ctx context.Context, ids []int64, templ
 		return nil
 	}
 
-	for _, object := range objects {
-		err := svc.ObjectRepository.Delete(ctx, object.ID)
-		if err != nil {
-			return err
+	err = svc.Transactor.Execute(ctx, func(tx context.Context) error {
+		for _, object := range objects {
+			err = svc.ObjectRepository.Delete(ctx, object.ID)
+			if err != nil {
+				return err
+			}
 		}
+
+		return nil
+	})
+	if err != nil {
+		return err
 	}
 
 	return nil

@@ -3,6 +3,7 @@ package object_template
 import (
 	"context"
 	"errors"
+	"municipality_app/internal/domain/core_errors"
 	"municipality_app/internal/domain/entity"
 	"municipality_app/internal/domain/service"
 )
@@ -18,10 +19,19 @@ func (svc *objectTemplateService) Update(ctx context.Context, data *service.Upda
 	}
 
 	if templateExist == nil {
-		return nil, errors.New("template not found")
+		return nil, core_errors.ObjectTemplateNotFound
 	}
 
-	if data.Name != nil {
+	if data.Name != nil && templateExist.Name != *data.Name {
+		templateWithNameExists, err := svc.GetByNameAndMunicipalityID(ctx, *data.Name, data.MunicipalityID)
+		if err != nil {
+			return nil, err
+		}
+
+		if templateWithNameExists != nil {
+			return nil, core_errors.ObjectTemplateNameIsUsed
+		}
+
 		templateExist.Name = *data.Name
 	}
 
@@ -29,77 +39,84 @@ func (svc *objectTemplateService) Update(ctx context.Context, data *service.Upda
 		templateExist.ObjectTypeID = *data.ObjectType
 	}
 
-	template, err := svc.ObjectTemplateRepository.Update(ctx, templateExist)
-	if err != nil {
-		return nil, err
-	}
-
-	allObjectsByTemplate, err := svc.ObjectService.GetByTemplateID(ctx, templateExist.ID)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, attributeData := range data.AttributesToCreate {
-		createAttributeData := service.CreateObjectAttributeData{
-			ObjectTemplateID: template.ID,
-			Name:             attributeData.Name,
-			DefaultValue:     attributeData.DefaultValue,
-			ToShow:           attributeData.ToShow,
-		}
-
-		attribute, err := svc.ObjectAttributeService.CreateAttribute(ctx, createAttributeData)
+	err = svc.Transactor.Execute(ctx, func(tx context.Context) error {
+		template, err := svc.ObjectTemplateRepository.Update(tx, templateExist)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
-		for _, object := range allObjectsByTemplate {
-			value := &entity.ObjectAttributeValue{
-				ObjectID:          object.ID,
-				Value:             attribute.DefaultValue,
-				ObjectAttributeID: attribute.ID,
+		allObjectsByTemplate, err := svc.ObjectService.GetByTemplateID(tx, templateExist.ID)
+		if err != nil {
+			return err
+		}
+
+		for _, attributeData := range data.AttributesToCreate {
+			createAttributeData := service.CreateObjectAttributeData{
+				ObjectTemplateID: template.ID,
+				Name:             attributeData.Name,
+				DefaultValue:     attributeData.DefaultValue,
+				ToShow:           attributeData.ToShow,
 			}
 
-			_, err = svc.ObjectAttributeValueRepo.Create(ctx, value)
+			attribute, err := svc.ObjectAttributeService.CreateAttribute(tx, createAttributeData)
 			if err != nil {
-				return nil, err
+				return err
+			}
+
+			for _, object := range allObjectsByTemplate {
+				value := &entity.ObjectAttributeValue{
+					ObjectID:          object.ID,
+					Value:             attribute.DefaultValue,
+					ObjectAttributeID: attribute.ID,
+				}
+
+				_, err = svc.ObjectAttributeValueRepo.Create(tx, value)
+				if err != nil {
+					return err
+				}
+			}
+
+			attributes = append(attributes, *attribute)
+		}
+
+		for _, attributeData := range data.AttributesToUpdate {
+			updateAttributeData := service.UpdateObjectAttributeData{
+				ID:               attributeData.ID,
+				ObjectTemplateID: template.ID,
+				Name:             attributeData.Name,
+				DefaultValue:     attributeData.DefaultValue,
+				ToShow:           attributeData.ToShow,
+			}
+
+			attribute, err := svc.ObjectAttributeService.UpdateAttribute(tx, updateAttributeData)
+			if err != nil {
+				return err
+			}
+
+			attributes = append(attributes, *attribute)
+		}
+
+		for _, attributeID := range data.AttributesToDelete {
+			attribute, err := svc.ObjectAttributeService.GetAttributeByIDAndTemplateID(tx, attributeID, template.ID)
+			if err != nil {
+				return err
+			}
+
+			if attribute == nil {
+				return errors.New("attribute not found")
+			}
+
+			err = svc.ObjectAttributeService.DeleteAttribute(tx, attributeID)
+			if err != nil {
+				return err
 			}
 		}
 
-		attributes = append(attributes, *attribute)
+		return nil
+	})
+	if err != nil {
+		return nil, err
 	}
 
-	for _, attributeData := range data.AttributesToUpdate {
-		updateAttributeData := service.UpdateObjectAttributeData{
-			ID:               attributeData.ID,
-			ObjectTemplateID: template.ID,
-			Name:             attributeData.Name,
-			DefaultValue:     attributeData.DefaultValue,
-			ToShow:           attributeData.ToShow,
-		}
-
-		attribute, err := svc.ObjectAttributeService.UpdateAttribute(ctx, updateAttributeData)
-		if err != nil {
-			return nil, err
-		}
-
-		attributes = append(attributes, *attribute)
-	}
-
-	for _, attributeID := range data.AttributesToDelete {
-		attribute, err := svc.ObjectAttributeService.GetAttributeByIDAndTemplateID(ctx, attributeID, template.ID)
-		if err != nil {
-			return nil, err
-		}
-
-		if attribute == nil {
-			return nil, errors.New("attribute not found")
-		}
-
-		err = svc.ObjectAttributeService.DeleteAttribute(ctx, attributeID)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return svc.GetExByID(ctx, template.ID)
+	return svc.GetExByID(ctx, data.ID)
 }

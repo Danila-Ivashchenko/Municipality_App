@@ -15,7 +15,7 @@ const (
 )
 
 func (r *passportFileRepository) execQuery(ctx context.Context, sqlQuery string, args ...any) error {
-	_, err := r.db.ExecContext(ctx, sqlQuery, args...)
+	_, err := r.handler.ExecContext(ctx, sqlQuery, args...)
 	if err != nil {
 		return err
 	}
@@ -30,7 +30,7 @@ func (r *passportFileRepository) fetchRowWithCondition(ctx context.Context, cond
 func (r *passportFileRepository) fetchRow(ctx context.Context, sqlQuery string, args ...any) (*entity.PassportFile, error) {
 	m := &passportFileModel{}
 
-	row := r.db.QueryRowContext(ctx, sqlQuery, args...)
+	row := r.handler.QueryRowContext(ctx, sqlQuery, args...)
 	if row.Err() != nil {
 		return nil, row.Err()
 	}
@@ -56,7 +56,7 @@ func (r *passportFileRepository) fetchRows(ctx context.Context, sqlQuery string,
 		result []entity.PassportFile
 	)
 
-	rows, err := r.db.QueryContext(ctx, sqlQuery, args...)
+	rows, err := r.handler.QueryContext(ctx, sqlQuery, args...)
 	if err != nil {
 		return nil, err
 	}

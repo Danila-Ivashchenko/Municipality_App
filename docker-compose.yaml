@@ -1,9 +1,9 @@
 version: '3.8'
 
 services:
-  db:
+  db-new:
     image: postgres:latest
-    container_name: mun-db
+    container_name: mun-db-new
     environment:
       POSTGRES_HOST: ${POSTGRES_HOST}
       POSTGRES_DB: ${POSTGRES_DB}
@@ -14,7 +14,7 @@ services:
     ports:
       - "${POSTGRES_PORT}:${POSTGRES_PORT}"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data_new:/var/lib/postgresql/data
 
   nginx:
     image: nginx:latest
@@ -25,4 +25,4 @@ services:
       - "./storage:/usr/share/nginx/html:ro"
       - "./nginx.conf:/etc/nginx/conf.d/default.conf:ro"
 volumes:
-  postgres_data:
+  postgres_data_new:

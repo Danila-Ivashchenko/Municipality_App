@@ -3,6 +3,7 @@ package entity_type
 import (
 	"context"
 	"errors"
+	"municipality_app/internal/domain/core_errors"
 	"municipality_app/internal/domain/entity"
 	"municipality_app/internal/domain/repository"
 	"municipality_app/internal/domain/service"
@@ -39,7 +40,7 @@ func (svc *entityTypeService) Update(ctx context.Context, data *service.UpdateEn
 	}
 
 	if entityTypeExist != nil {
-		return nil, errors.New("entity type already exist")
+		return nil, core_errors.EntityTypeNameIsUsed
 	}
 
 	entityType.Name = data.Name
@@ -59,7 +60,7 @@ func (svc *entityTypeService) CreateMultiply(ctx context.Context, data *service.
 
 	for _, d := range data.Data {
 		if _, ok := namesMap[d.Name]; ok {
-			return nil, errors.New("duplicate name")
+			return nil, core_errors.EntityTypeNameIsUsed
 		}
 
 		names = append(names, d.Name)
@@ -72,18 +73,25 @@ func (svc *entityTypeService) CreateMultiply(ctx context.Context, data *service.
 	}
 
 	if len(entitysExists) > 0 {
-		return nil, errors.New("duplicate name")
+		return nil, core_errors.EntityTypeNameIsUsed
 	}
 
-	for _, d := range data.Data {
-		repoData := &repository.CreateEntityType{Name: d.Name}
+	err = svc.Transactor.Execute(ctx, func(tx context.Context) error {
+		for _, d := range data.Data {
+			repoData := &repository.CreateEntityType{Name: d.Name}
 
-		entityType, err = svc.EntityTypeRepository.Create(ctx, repoData)
-		if err != nil {
-			return nil, err
+			entityType, err = svc.EntityTypeRepository.Create(ctx, repoData)
+			if err != nil {
+				return err
+			}
+
+			result = append(result, *entityType)
 		}
 
-		result = append(result, *entityType)
+		return nil
+	})
+	if err != nil {
+		return nil, err
 	}
 
 	return result, nil

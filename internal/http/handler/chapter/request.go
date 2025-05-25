@@ -1,7 +1,6 @@
 package chapter
 
 import (
-	"errors"
 	"municipality_app/internal/domain/service"
 )
 
@@ -10,14 +9,6 @@ type reqCreateChapter struct {
 	Description string `json:"description"`
 	Text        string `json:"text"`
 	OrderNumber uint   `json:"order_number"`
-}
-
-func (req *reqCreateChapter) Validate() error {
-	if req.Name == "" {
-		return errors.New("name is required")
-	}
-
-	return nil
 }
 
 func (req *reqCreateChapter) Convert(passportID, municipalityID int64) *service.PassportCreateChaptersData {

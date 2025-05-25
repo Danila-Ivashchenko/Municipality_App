@@ -15,7 +15,7 @@ const (
 )
 
 func (r *entityToPartitionRepository) execQuery(ctx context.Context, sqlQuery string, args ...any) error {
-	res, err := r.db.ExecContext(ctx, sqlQuery, args...)
+	res, err := r.handler.ExecContext(ctx, sqlQuery, args...)
 	if err != nil {
 		return err
 	}
@@ -38,7 +38,7 @@ func (r *entityToPartitionRepository) fetchRowWithCondition(ctx context.Context,
 func (r *entityToPartitionRepository) fetchRow(ctx context.Context, sqlQuery string, args ...any) (*entity.EntityToPartition, error) {
 	m := &model{}
 
-	row := r.db.QueryRowContext(ctx, sqlQuery, args...)
+	row := r.handler.QueryRowContext(ctx, sqlQuery, args...)
 	if row.Err() != nil {
 		return nil, row.Err()
 	}
@@ -64,7 +64,7 @@ func (r *entityToPartitionRepository) fetchRows(ctx context.Context, sqlQuery st
 		result []entity.EntityToPartition
 	)
 
-	rows, err := r.db.QueryContext(ctx, sqlQuery, args...)
+	rows, err := r.handler.QueryContext(ctx, sqlQuery, args...)
 	if err != nil {
 		return nil, err
 	}

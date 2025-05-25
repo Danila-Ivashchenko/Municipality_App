@@ -2,7 +2,7 @@ package entity
 
 import (
 	"context"
-	"fmt"
+	"municipality_app/internal/domain/core_errors"
 	"municipality_app/internal/domain/entity"
 	"municipality_app/internal/domain/service"
 )
@@ -19,7 +19,7 @@ func (svc *entityService) UpdateMultiply(ctx context.Context, data *service.Upda
 		if entityData.Name != nil {
 			_, ok := uniqueNames[*entityData.Name]
 			if ok {
-				return nil, fmt.Errorf("duplicate entity name: %s", entityData.Name)
+				return nil, core_errors.EntityNameIsUsed
 			}
 
 			uniqueNames[*entityData.Name] = struct{}{}
@@ -34,49 +34,56 @@ func (svc *entityService) UpdateMultiply(ctx context.Context, data *service.Upda
 	}
 
 	if len(entityExists) > 0 {
-		return nil, fmt.Errorf("duplicate entity name: %s", entityExists[0].Name)
+		return nil, core_errors.EntityNameIsUsed
 	}
 
-	for _, entityData := range data.Entities {
-		e, err := svc.EntityRepository.GetByID(ctx, entityData.ID)
-		if err != nil {
-			return nil, err
+	err = svc.Transactor.Execute(ctx, func(tx context.Context) error {
+		for _, entityData := range data.Entities {
+			e, err := svc.EntityRepository.GetByID(tx, entityData.ID)
+			if err != nil {
+				return err
+			}
+
+			if e == nil {
+				continue
+			}
+
+			if entityData.Name != nil {
+				e.Name = *entityData.Name
+			}
+
+			if entityData.Description != nil {
+				e.Description = *entityData.Description
+			}
+
+			e, err = svc.EntityRepository.Update(tx, e)
+			if err != nil {
+				return err
+			}
+
+			createAttributeValuesData := service.CreateEntityAttributesData{
+				EntityID:         e.ID,
+				EntityTemplateID: e.EntityTemplateID,
+				ValuesData:       entityData.AttributeValues,
+			}
+
+			_, err = svc.EntityAttributeService.UpdateValues(tx, createAttributeValuesData)
+			if err != nil {
+				return err
+			}
+
+			attributeValues, err := svc.EntityAttributeService.GetAttributesExByEntityID(tx, e.ID)
+			if err != nil {
+				return err
+			}
+
+			result = append(result, *entity.NewEntityExPtr(e, attributeValues))
 		}
 
-		if e == nil {
-			continue
-		}
-
-		if entityData.Name != nil {
-			e.Name = *entityData.Name
-		}
-
-		if entityData.Description != nil {
-			e.Description = *entityData.Description
-		}
-
-		e, err = svc.EntityRepository.Update(ctx, e)
-		if err != nil {
-			return nil, err
-		}
-
-		createAttributeValuesData := service.CreateEntityAttributesData{
-			EntityID:         e.ID,
-			EntityTemplateID: e.EntityTemplateID,
-			ValuesData:       entityData.AttributeValues,
-		}
-
-		_, err = svc.EntityAttributeService.UpdateValues(ctx, createAttributeValuesData)
-		if err != nil {
-			return nil, err
-		}
-
-		attributeValues, err := svc.EntityAttributeService.GetAttributesExByEntityID(ctx, e.ID)
-		if err != nil {
-			return nil, err
-		}
-
-		result = append(result, *entity.NewEntityExPtr(e, attributeValues))
+		return nil
+	})
+	if err != nil {
+		return nil, err
 	}
 
 	return result, nil

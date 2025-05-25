@@ -17,18 +17,10 @@ const (
 )
 
 func (r *chapterRepository) execQuery(ctx context.Context, sqlQuery string, args ...any) error {
-	_, err := r.db.ExecContext(ctx, sqlQuery, args...)
+	_, err := r.handler.ExecContext(ctx, sqlQuery, args...)
 	if err != nil {
 		return err
 	}
-
-	//rowsAffected, err := res.RowsAffected()
-	//if err != nil {
-	//	return err
-	//}
-	//if rowsAffected == 0 {
-	//	return errors.New("now rows affected")
-	//}
 
 	return nil
 }
@@ -40,7 +32,7 @@ func (r *chapterRepository) fetchRowWithCondition(ctx context.Context, condition
 func (r *chapterRepository) fetchRow(ctx context.Context, sqlQuery string, args ...any) (*entity.Chapter, error) {
 	m := &modelChapter{}
 
-	row := r.db.QueryRowContext(ctx, sqlQuery, args...)
+	row := r.handler.QueryRowContext(ctx, sqlQuery, args...)
 	if row.Err() != nil {
 		return nil, row.Err()
 	}
@@ -66,7 +58,7 @@ func (r *chapterRepository) fetchRows(ctx context.Context, sqlQuery string, args
 		result []entity.Chapter
 	)
 
-	rows, err := r.db.QueryContext(ctx, sqlQuery, args...)
+	rows, err := r.handler.QueryContext(ctx, sqlQuery, args...)
 	if err != nil {
 		return nil, err
 	}

@@ -2,6 +2,7 @@ package object_template
 
 import (
 	"go.uber.org/fx"
+	"municipality_app/internal/common/transactor"
 	"municipality_app/internal/domain/repository"
 	"municipality_app/internal/domain/service"
 )
@@ -15,6 +16,8 @@ type ServiceParams struct {
 	ObjectAttributeService service.ObjectAttributeService
 	ObjectService          service.ObjectService
 	ObjectTypeService      service.ObjectTypeService
+
+	Transactor transactor.Transactor
 }
 
 type objectTemplateService struct {

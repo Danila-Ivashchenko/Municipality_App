@@ -18,11 +18,6 @@ func (h *Handler) UpdateChapter(c *gin.Context) {
 		return
 	}
 
-	//if validateErr := req.Validate(); validateErr != nil {
-	//	response.Error(c, validateErr)
-	//	return
-	//}
-
 	passport := context_paylod_parser.GetPassportFromContext(ctx)
 	if passport == nil {
 		response.Error(c, errors.New("passport not found"))

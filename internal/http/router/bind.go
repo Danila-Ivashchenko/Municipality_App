@@ -23,6 +23,7 @@ func (rout *Router) bind() *gin.Engine {
 	r.Use(gin.Logger())
 
 	rout.bindUser()
+	rout.bindUserAdmin()
 	rout.bindRegion()
 	rout.bindMunicipality()
 	rout.bindPassport()
@@ -50,12 +51,21 @@ func (rout *Router) bindUser() {
 	userRouterWithAuth.POST("/logout", rout.UserHandler.Logout)
 }
 
+func (rout *Router) bindUserAdmin() {
+	userRouter := rout.r.Group("/admin/users").Use(rout.AuthMiddleware.WithAuth())
+
+	userRouter.GET("", rout.UserAdminHandler.GetAll)
+	userRouter.PUT("", rout.UserAdminHandler.Update)
+}
+
 func (rout *Router) bindRegion() {
 	regionRouter := rout.r.Group("/region")
 
 	regionRouter.POST("/params", rout.RegionHandler.GetByParams)
 
-	regionRouterWithAuth := regionRouter.Use(rout.AuthMiddleware.WithAuth())
+	regionRouterWithAuth := regionRouter.
+		Use(rout.AuthMiddleware.WithAuth()).
+		Use(rout.AuthMiddleware.WithAdmin())
 
 	regionRouterWithAuth.POST("", rout.RegionHandler.Create)
 }
@@ -90,7 +100,7 @@ func (rout *Router) bindPassport() {
 
 	passportRouterWithMunicipalityWithAuth := rout.r.Group("/municipality/" + keys.NewUriKeyPlaceHolder(keys.MunicipalityIdKey) + "/passport").
 		Use(rout.MunicipalityMiddleware.WithMunicipality())
-	passportRouterWithMunicipalityWithAuth.Use(rout.AuthMiddleware.WithAuth(), rout.AuthMiddleware.WithAdmin())
+	passportRouterWithMunicipalityWithAuth.Use(rout.AuthMiddleware.WithAuth()).Use(rout.AuthMiddleware.WithCanEdit())
 
 	passportRouterWithMunicipalityWithAuth.POST("", rout.PassportHandler.Create)
 
@@ -101,25 +111,32 @@ func (rout *Router) bindPassport() {
 		Use(rout.MunicipalityMiddleware.WithMunicipality()).
 		Use(rout.PassportMiddleware.WithPassport())
 
-	passportRouterWithWithAuthID := rout.r.Group("/municipality/" + keys.NewUriKeyPlaceHolder(keys.MunicipalityIdKey) + "/passport").Group(keys.NewUriKeyPlaceHolder(keys.PassportID)).
+	passportRouterWithWithAuthIDWithDelete := rout.r.Group("/municipality/" + keys.NewUriKeyPlaceHolder(keys.MunicipalityIdKey) + "/passport").Group(keys.NewUriKeyPlaceHolder(keys.PassportID)).
 		Use(rout.MunicipalityMiddleware.WithMunicipality()).
 		Use(rout.PassportMiddleware.WithPassport()).
-		Use(rout.AuthMiddleware.WithAuth()).
-		Use(rout.AuthMiddleware.WithAdmin())
+		Use(rout.AuthMiddleware.WithAuth()).Use(rout.AuthMiddleware.WithCanDelete())
+
+	passportRouterWithWithAuthIDWithWrite := rout.r.Group("/municipality/" + keys.NewUriKeyPlaceHolder(keys.MunicipalityIdKey) + "/passport").Group(keys.NewUriKeyPlaceHolder(keys.PassportID)).
+		Use(rout.MunicipalityMiddleware.WithMunicipality()).
+		Use(rout.PassportMiddleware.WithPassport()).
+		Use(rout.AuthMiddleware.WithAuth()).Use(rout.AuthMiddleware.WithCanEdit())
 
 	passportRouterWithID.GET("", rout.PassportHandler.GetMunicipalityAndID)
-	passportRouterWithWithAuthID.POST("/file", rout.PassportHandler.CreateFile)
-	passportRouterWithWithAuthID.PUT("", rout.PassportHandler.Update)
-	passportRouterWithWithAuthID.DELETE("", rout.PassportHandler.Delete)
+	passportRouterWithWithAuthIDWithWrite.POST("/file", rout.PassportHandler.CreateFile)
+	passportRouterWithWithAuthIDWithWrite.PUT("", rout.PassportHandler.Update)
+	passportRouterWithWithAuthIDWithDelete.DELETE("", rout.PassportHandler.Delete)
+	passportRouterWithWithAuthIDWithWrite.POST("", rout.PassportHandler.Copy)
 }
 
 func (rout *Router) bindObjectTypes() {
 	objectTypeRouter := rout.r.Group("/object_type")
+	objectTypeRouterWithWrite := rout.r.Group("/object_type").Use(rout.AuthMiddleware.WithAuth()).Use(rout.AuthMiddleware.WithCanDelete())
+	objectTypeRouterWithDelete := rout.r.Group("/object_type").Use(rout.AuthMiddleware.WithAuth()).Use(rout.AuthMiddleware.WithCanEdit())
 
 	objectTypeRouter.GET("", rout.ObjectTypeHandler.GetAll)
-	objectTypeRouter.Use(rout.AuthMiddleware.WithAuth(), rout.AuthMiddleware.WithAdmin()).POST("", rout.ObjectTypeHandler.Create)
-	objectTypeRouter.Use(rout.AuthMiddleware.WithAuth(), rout.AuthMiddleware.WithAdmin()).PUT("", rout.ObjectTypeHandler.Update)
-	objectTypeRouter.Use(rout.AuthMiddleware.WithAuth(), rout.AuthMiddleware.WithAdmin()).DELETE("", rout.ObjectTypeHandler.Delete)
+	objectTypeRouterWithWrite.POST("", rout.ObjectTypeHandler.Create)
+	objectTypeRouterWithWrite.PUT("", rout.ObjectTypeHandler.Update)
+	objectTypeRouterWithDelete.DELETE("", rout.ObjectTypeHandler.Delete)
 }
 
 func (rout *Router) bindChapter() {
@@ -131,7 +148,7 @@ func (rout *Router) bindChapter() {
 	updatedPassport := rout.PassportMiddleware.UpdatePassportUpdatedAt
 
 	chapterRouterWithUpdated := chapterRouter.
-		Use(updatedPassport())
+		Use(updatedPassport()).Use(rout.AuthMiddleware.WithAuth()).Use(rout.AuthMiddleware.WithCanEdit())
 
 	chapterRouterWithUpdated.POST("", rout.ChapterHandler.CreateChapter)
 
@@ -141,10 +158,14 @@ func (rout *Router) bindChapter() {
 		Use(rout.PassportMiddleware.WithChapter())
 
 	chapterWithIDRouterWithUpdated := chapterWithIDRouter.
+		Use(rout.AuthMiddleware.WithAuth()).
 		Use(updatedPassport())
 
-	chapterWithIDRouterWithUpdated.PUT("", rout.ChapterHandler.UpdateChapter).Use(updatedPassport())
-	chapterWithIDRouterWithUpdated.DELETE("", rout.ChapterHandler.Delete).Use(updatedPassport())
+	chapterWithIDRouterWithUpdatedWithWrite := chapterWithIDRouterWithUpdated.Use(rout.AuthMiddleware.WithCanEdit())
+	chapterWithIDRouterWithUpdatedWithDelete := chapterWithIDRouterWithUpdated.Use(rout.AuthMiddleware.WithCanDelete())
+
+	chapterWithIDRouterWithUpdatedWithWrite.PUT("", rout.ChapterHandler.UpdateChapter).Use(updatedPassport())
+	chapterWithIDRouterWithUpdatedWithDelete.DELETE("", rout.ChapterHandler.Delete).Use(updatedPassport())
 	chapterWithIDRouter.GET("", rout.ChapterHandler.GetChapter)
 }
 
@@ -156,9 +177,9 @@ func (rout *Router) bindPartition() {
 
 	updatedPassport := rout.PassportMiddleware.UpdatePassportUpdatedAt
 
-	partitionRouterWithUpdated := partitionRouter.Use(updatedPassport())
+	partitionRouterWithUpdated := partitionRouter.Use(updatedPassport()).Use(rout.AuthMiddleware.WithAuth()).Use(rout.AuthMiddleware.WithCanEdit())
 
-	partitionRouterWithUpdated.POST("", rout.PartitionHandler.CreatePartition).Use(updatedPassport())
+	partitionRouterWithUpdated.POST("", rout.PartitionHandler.CreatePartition)
 
 	partitionWithIDRouter := rout.r.Group("/municipality/:municipality_id/passport/:passport_id/chapter/:chapter_id/partition/:partition_id").
 		Use(rout.MunicipalityMiddleware.WithMunicipality()).
@@ -166,10 +187,15 @@ func (rout *Router) bindPartition() {
 		Use(rout.PassportMiddleware.WithChapter()).
 		Use(rout.PassportMiddleware.WithPartition())
 
-	partitionWithIDRouterWithUpdated := partitionWithIDRouter.Use(updatedPassport())
+	partitionWithIDRouterWithUpdated := partitionWithIDRouter.
+		Use(rout.AuthMiddleware.WithAuth()).
+		Use(updatedPassport())
 
-	partitionWithIDRouterWithUpdated.PUT("", rout.PartitionHandler.UpdatePartition).Use(updatedPassport())
-	partitionWithIDRouterWithUpdated.DELETE("", rout.PartitionHandler.DeletePartition).Use(updatedPassport())
+	partitionWithIDRouterWithUpdatedWithWrite := partitionWithIDRouterWithUpdated.Use(rout.AuthMiddleware.WithCanEdit())
+	partitionWithIDRouterWithUpdatedWithDelete := partitionWithIDRouterWithUpdated.Use(rout.AuthMiddleware.WithCanDelete())
+
+	partitionWithIDRouterWithUpdatedWithWrite.PUT("", rout.PartitionHandler.UpdatePartition).Use(updatedPassport())
+	partitionWithIDRouterWithUpdatedWithDelete.DELETE("", rout.PartitionHandler.DeletePartition).Use(updatedPassport())
 
 	partitionWithIDRouter.GET("", rout.PartitionHandler.GetPartition)
 
@@ -181,10 +207,11 @@ func (rout *Router) bindObject() {
 
 	objectRouterWithAuth := rout.r.Group("/municipality/:municipality_id/object_template").
 		Use(rout.MunicipalityMiddleware.WithMunicipality()).
-		Use(rout.AuthMiddleware.WithAuth()).
-		Use(rout.AuthMiddleware.WithAdmin())
+		Use(rout.AuthMiddleware.WithAuth())
 
-	objectRouterWithAuth.POST("", rout.ObjectHandler.CreateTemplate)
+	objectRouterWithAuthWithWrite := objectRouterWithAuth.Use(rout.AuthMiddleware.WithCanEdit())
+
+	objectRouterWithAuthWithWrite.POST("", rout.ObjectHandler.CreateTemplate)
 	objectRouter.GET("", rout.ObjectHandler.GetTemplatesByMunicipality)
 
 	objectRouterWithTemplateID := rout.r.Group("/municipality/:municipality_id/object_template/:object_template_id").
@@ -194,25 +221,28 @@ func (rout *Router) bindObject() {
 	objectRouterWithTemplateIDWithAuth := rout.r.Group("/municipality/:municipality_id/object_template/:object_template_id").
 		Use(rout.MunicipalityMiddleware.WithMunicipality()).
 		Use(rout.PassportMiddleware.WithObjectTemplate()).
-		Use(rout.AuthMiddleware.WithAuth()).
-		Use(rout.AuthMiddleware.WithAdmin())
+		Use(rout.AuthMiddleware.WithAuth())
+
+	objectRouterWithTemplateIDWithAuthWithWrite := objectRouterWithTemplateIDWithAuth.Use(rout.AuthMiddleware.WithCanEdit())
+	objectRouterWithTemplateIDWithAuthWithDelete := objectRouterWithTemplateIDWithAuth.Use(rout.AuthMiddleware.WithCanDelete())
 
 	objectRouterWithTemplateID.GET("", rout.ObjectHandler.GetTemplateByID)
-	objectRouterWithTemplateIDWithAuth.PUT("", rout.ObjectHandler.UpdateTemplate)
-	objectRouterWithTemplateIDWithAuth.DELETE("", rout.ObjectHandler.DeleteTemplate)
+	objectRouterWithTemplateIDWithAuthWithWrite.PUT("", rout.ObjectHandler.UpdateTemplate)
+	objectRouterWithTemplateIDWithAuthWithDelete.DELETE("", rout.ObjectHandler.DeleteTemplate)
 
-	objectRouterWithTemplateIDWithAuth.POST("/objects", rout.ObjectHandler.CreateObjects)
+	objectRouterWithTemplateIDWithAuthWithWrite.POST("/objects", rout.ObjectHandler.CreateObjects)
 	objectRouterWithTemplateID.GET("/objects", rout.ObjectHandler.GetObjects)
-	objectRouterWithTemplateIDWithAuth.PUT("/objects", rout.ObjectHandler.UpdateObjects)
-	objectRouterWithTemplateIDWithAuth.DELETE("/objects", rout.ObjectHandler.DeleteObjects)
+	objectRouterWithTemplateIDWithAuthWithWrite.PUT("/objects", rout.ObjectHandler.UpdateObjects)
+	objectRouterWithTemplateIDWithAuthWithDelete.DELETE("/objects", rout.ObjectHandler.DeleteObjects)
 }
 
 func (rout *Router) bindEntityTypes() {
 	objectTypeRouter := rout.r.Group("/entity_type")
+	objectTypeRouterWithWrite := rout.r.Group("/entity_type").Use(rout.AuthMiddleware.WithAuth()).Use(rout.AuthMiddleware.WithCanEdit())
 
 	objectTypeRouter.GET("", rout.EntityTypeHandler.GetAll)
-	objectTypeRouter.Use(rout.AuthMiddleware.WithAuth()).POST("", rout.EntityTypeHandler.Create)
-	objectTypeRouter.Use(rout.AuthMiddleware.WithAuth()).PUT("", rout.EntityTypeHandler.Update)
+	objectTypeRouterWithWrite.POST("", rout.EntityTypeHandler.Create)
+	objectTypeRouterWithWrite.PUT("", rout.EntityTypeHandler.Update)
 }
 
 func (rout *Router) bindEntities() {
@@ -226,14 +256,19 @@ func (rout *Router) bindEntities() {
 		Use(rout.MunicipalityMiddleware.WithMunicipality()).
 		Use(rout.PassportMiddleware.WithEntityTemplate())
 
-	entityRouterWithTemplateID.GET("", rout.EntityHandler.GetTemplateByID)
-	entityRouterWithTemplateID.PUT("", rout.EntityHandler.UpdateTemplate)
-	entityRouterWithTemplateID.DELETE("", rout.EntityHandler.DeleteTemplate)
+	entityRouterWithTemplateIDWithAuth := entityRouterWithTemplateID.Use(rout.AuthMiddleware.WithAuth())
 
-	entityRouterWithTemplateID.POST("/entities", rout.EntityHandler.CreateEntities)
+	entityRouterWithTemplateIDWithAuthWithWrite := entityRouterWithTemplateIDWithAuth.Use(rout.AuthMiddleware.WithCanEdit())
+	entityRouterWithTemplateIDWithAuthWithDelete := entityRouterWithTemplateIDWithAuth.Use(rout.AuthMiddleware.WithCanDelete())
+
+	entityRouterWithTemplateID.GET("", rout.EntityHandler.GetTemplateByID)
+	entityRouterWithTemplateIDWithAuthWithWrite.PUT("", rout.EntityHandler.UpdateTemplate)
+	entityRouterWithTemplateIDWithAuthWithDelete.DELETE("", rout.EntityHandler.DeleteTemplate)
+
+	entityRouterWithTemplateIDWithAuthWithWrite.POST("/entities", rout.EntityHandler.CreateEntities)
 	entityRouterWithTemplateID.GET("/entities", rout.EntityHandler.GetEntitys)
-	entityRouterWithTemplateID.PUT("/entities", rout.EntityHandler.UpdateEntities)
-	entityRouterWithTemplateID.DELETE("/entities", rout.EntityHandler.DeleteEntities)
+	entityRouterWithTemplateIDWithAuthWithWrite.PUT("/entities", rout.EntityHandler.UpdateEntities)
+	entityRouterWithTemplateIDWithAuthWithDelete.DELETE("/entities", rout.EntityHandler.DeleteEntities)
 }
 
 func (rout *Router) bindRoutes() {
@@ -245,7 +280,7 @@ func (rout *Router) bindRoutes() {
 
 	updatedPassport := rout.PassportMiddleware.UpdatePassportUpdatedAt
 
-	routeRouterWithUpdated := routeRouter.Use(updatedPassport())
+	routeRouterWithUpdated := routeRouter.Use(updatedPassport()).Use(rout.AuthMiddleware.WithAuth()).Use(rout.AuthMiddleware.WithCanEdit())
 
 	routeRouterWithUpdated.POST("", rout.RouteHandler.Create).Use(updatedPassport())
 
@@ -256,8 +291,10 @@ func (rout *Router) bindRoutes() {
 		Use(rout.PassportMiddleware.WithPartition()).
 		Use(rout.PassportMiddleware.WithRoute())
 
-	routeRouterWithIDWithUpdated := routeRouterWithID.Use(updatedPassport())
+	routeRouterWithIDWithUpdated := routeRouterWithID.Use(rout.AuthMiddleware.WithAuth()).Use(updatedPassport())
+	routeRouterWithIDWithUpdatedWithWrite := routeRouterWithIDWithUpdated.Use(rout.AuthMiddleware.WithCanEdit())
+	routeRouterWithIDWithUpdatedWithDelete := routeRouterWithIDWithUpdated.Use(rout.AuthMiddleware.WithCanDelete())
 
-	routeRouterWithIDWithUpdated.PUT("", rout.RouteHandler.Update).Use(updatedPassport())
-	routeRouterWithIDWithUpdated.DELETE("", rout.RouteHandler.Delete).Use(updatedPassport())
+	routeRouterWithIDWithUpdatedWithWrite.PUT("", rout.RouteHandler.Update).Use(updatedPassport())
+	routeRouterWithIDWithUpdatedWithDelete.DELETE("", rout.RouteHandler.Delete).Use(updatedPassport())
 }

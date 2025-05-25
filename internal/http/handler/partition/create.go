@@ -18,11 +18,6 @@ func (h *Handler) CreatePartition(c *gin.Context) {
 		return
 	}
 
-	if validateErr := req.Validate(); validateErr != nil {
-		response.Error(c, validateErr)
-		return
-	}
-
 	chapter := context_paylod_parser.GetChapterFromContext(ctx)
 	if chapter == nil {
 		response.Error(c, errors.New("chapter not found"))

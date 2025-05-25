@@ -3,6 +3,7 @@ package chapter
 import (
 	"context"
 	"fmt"
+	"municipality_app/internal/domain/core_errors"
 	"municipality_app/internal/domain/entity"
 	"municipality_app/internal/domain/repository"
 	"municipality_app/internal/domain/service"
@@ -80,7 +81,7 @@ func (svc *chapterService) simpleCreate(ctx context.Context, data *service.Creat
 	return svc.ChapterRepository.CreateMultiply(ctx, repoDatas)
 }
 
-//func (svc *municipalityService) CreateToPassport(ctx context.Context, data *service.CreateChaptersData) ([]entity.Chapter, error) {
+//func (svc *municipalityService) CreateToPassport(ctx context.Context, data *service.CreateChaptersData) ([]entity.Chapter, core_errors) {
 //	var (
 //		orderToID = make(map[uint]int64)
 //	)
@@ -120,7 +121,7 @@ func validateOrders(orders []uint) error {
 	return nil
 }
 
-//func (svc *municipalityService) UpdateToPassport(ctx context.Context, data *service.UpdateChaptersData) ([]entity.Chapter, error) {
+//func (svc *municipalityService) UpdateToPassport(ctx context.Context, data *service.UpdateChaptersData) ([]entity.Chapter, core_errors) {
 //	//TODO implement me
 //	panic("implement me")
 //}
@@ -247,8 +248,13 @@ func (svc *chapterService) changeOrder(ctx context.Context, order uint, chapterI
 
 func (svc *chapterService) Create(ctx context.Context, data *service.CreateOneChapterData) (*entity.Chapter, error) {
 	var (
-		maxOrder uint = 1
+		maxOrder   uint = 1
+		newChapter *entity.Chapter
 	)
+
+	if err := data.Validate(); err != nil {
+		return nil, err
+	}
 
 	chapters, err := svc.ChapterRepository.GetByPassportID(ctx, data.PassportID)
 	if err != nil {
@@ -265,29 +271,63 @@ func (svc *chapterService) Create(ctx context.Context, data *service.CreateOneCh
 		data.OrderNumber = maxOrder
 	}
 
-	err = svc.clearOrder(ctx, data.OrderNumber, data.PassportID)
+	chapterExists, err := svc.ChapterRepository.GetByNameAndPassportID(ctx, data.Name, data.PassportID)
 	if err != nil {
 		return nil, err
 	}
 
-	repoData := &repository.CreateChapterData{
-		Name:        data.Name,
-		PassportID:  data.PassportID,
-		Description: data.Description,
-		Text:        data.Text,
-		OrderNumber: data.OrderNumber,
+	if chapterExists != nil {
+		return nil, core_errors.ChapterNameAlreadyUsed
 	}
 
-	return svc.ChapterRepository.Create(ctx, repoData)
+	err = svc.Transactor.Execute(ctx, func(tx context.Context) error {
+		err = svc.clearOrder(tx, data.OrderNumber, data.PassportID)
+		if err != nil {
+			return err
+		}
+
+		repoData := &repository.CreateChapterData{
+			Name:        data.Name,
+			PassportID:  data.PassportID,
+			Description: data.Description,
+			Text:        data.Text,
+			OrderNumber: data.OrderNumber,
+		}
+
+		newChapter, err = svc.ChapterRepository.Create(tx, repoData)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return newChapter, nil
 }
 
 func (svc *chapterService) Update(ctx context.Context, data *service.UpdateChapterData) (*entity.Chapter, error) {
+	if err := data.Validate(); err != nil {
+		return nil, err
+	}
+
 	chapter, err := svc.ChapterRepository.GetByID(ctx, data.ID)
 	if err != nil {
 		return nil, err
 	}
 
 	if data.Name != nil && *data.Name != chapter.Name {
+		chapterExists, err := svc.ChapterRepository.GetByNameAndPassportID(ctx, *data.Name, chapter.PassportID)
+		if err != nil {
+			return nil, err
+		}
+
+		if chapterExists != nil {
+			return nil, core_errors.ChapterNameAlreadyUsed
+		}
+
 		chapter.Name = *data.Name
 	}
 
@@ -299,14 +339,16 @@ func (svc *chapterService) Update(ctx context.Context, data *service.UpdateChapt
 		chapter.Text = *data.Text
 	}
 
-	if data.OrderNumber != nil && *data.OrderNumber != chapter.OrderNumber {
-		err = svc.changeOrder(ctx, *data.OrderNumber, data.ID, chapter.PassportID)
-		if err != nil {
-			return nil, err
+	err = svc.Transactor.Execute(ctx, func(tx context.Context) error {
+		if data.OrderNumber != nil && *data.OrderNumber != chapter.OrderNumber {
+			err = svc.changeOrder(tx, *data.OrderNumber, data.ID, chapter.PassportID)
+			if err != nil {
+				return err
+			}
 		}
-	}
 
-	err = svc.ChapterRepository.Update(ctx, chapter)
+		return svc.ChapterRepository.Update(tx, chapter)
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -328,25 +370,32 @@ func (svc *chapterService) DeleteToPassport(ctx context.Context, ids []int64, pa
 		return allChapters[i].OrderNumber < allChapters[j].OrderNumber
 	})
 
-	for _, id := range ids {
-		for i, chapter := range allChapters {
-			if chapter.ID == id {
-				for j := i + 1; j < len(allChapters); j++ {
-					allChapters[j].OrderNumber -= 1
+	err = svc.Transactor.Execute(ctx, func(tx context.Context) error {
+		for _, id := range ids {
+			for i, chapter := range allChapters {
+				if chapter.ID == id {
+					for j := i + 1; j < len(allChapters); j++ {
+						allChapters[j].OrderNumber -= 1
 
-					err = svc.ChapterRepository.ChangeOrder(ctx, allChapters[j].ID, allChapters[j].OrderNumber)
-					if err != nil {
-						return err
+						err = svc.ChapterRepository.ChangeOrder(ctx, allChapters[j].ID, allChapters[j].OrderNumber)
+						if err != nil {
+							return err
+						}
 					}
+					break
 				}
-				break
+			}
+
+			err = svc.ChapterRepository.Delete(ctx, id)
+			if err != nil {
+				return err
 			}
 		}
 
-		err = svc.ChapterRepository.Delete(ctx, id)
-		if err != nil {
-			return err
-		}
+		return nil
+	})
+	if err != nil {
+		return err
 	}
 
 	return nil

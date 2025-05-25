@@ -8,8 +8,9 @@ import (
 type MiddlewareParams struct {
 	fx.In
 
-	UserService     service.UserService
-	UserAuthService service.UserAuthService
+	UserService           service.UserService
+	UserAuthService       service.UserAuthService
+	UserPermissionService service.UserPermissionService
 }
 
 type Middleware struct {

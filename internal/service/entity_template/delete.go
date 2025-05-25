@@ -2,7 +2,7 @@ package entity_template
 
 import (
 	"context"
-	"errors"
+	"municipality_app/internal/domain/core_errors"
 )
 
 func (svc *objectTemplateService) DeleteByIDAndMunicipalityID(ctx context.Context, id, municipalityID int64) error {
@@ -11,7 +11,7 @@ func (svc *objectTemplateService) DeleteByIDAndMunicipalityID(ctx context.Contex
 		return err
 	}
 	if template == nil {
-		return errors.New("template does not exist")
+		return core_errors.EntityTemplateNotFound
 	}
 
 	return svc.Delete(ctx, template.ID)

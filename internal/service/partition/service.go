@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"municipality_app/internal/domain/core_errors"
 	"municipality_app/internal/domain/entity"
 	"municipality_app/internal/domain/repository"
 	"municipality_app/internal/domain/service"
@@ -184,7 +185,13 @@ func (svc *partitionService) Create(ctx context.Context, data *service.CreateOne
 		entityIDs            []int64
 		entityTemplateMapIDs = make(map[int64]struct{})
 		entityTemplateIDs    []int64
+
+		partition *entity.Partition
 	)
+
+	if err := data.Validate(); err != nil {
+		return nil, err
+	}
 
 	allChapters, err := svc.PartitionRepository.GetByChapterID(ctx, data.ChapterID)
 	if err != nil {
@@ -195,31 +202,47 @@ func (svc *partitionService) Create(ctx context.Context, data *service.CreateOne
 		data.OrderNumber = uint(len(allChapters) + 1)
 	}
 
-	err = svc.clearOrder(ctx, data.OrderNumber, data.ChapterID)
+	partitionExists, err := svc.PartitionRepository.GetByNameAndChapterID(ctx, data.Name, data.ChapterID)
 	if err != nil {
 		return nil, err
 	}
 
-	repoData := &repository.CreatePartitionData{
-		Name:        data.Name,
-		ChapterID:   data.ChapterID,
-		Description: data.Description,
-		Text:        data.Text,
-		OrderNumber: data.OrderNumber,
+	if partitionExists != nil {
+		return nil, core_errors.PartitionNameAlreadyUsed
 	}
 
-	partition, err := svc.PartitionRepository.Create(ctx, repoData)
+	err = svc.Transactor.Execute(ctx, func(tx context.Context) error {
+		err = svc.clearOrder(tx, data.OrderNumber, data.ChapterID)
+		if err != nil {
+			return err
+		}
+
+		repoData := &repository.CreatePartitionData{
+			Name:        data.Name,
+			ChapterID:   data.ChapterID,
+			Description: data.Description,
+			Text:        data.Text,
+			OrderNumber: data.OrderNumber,
+		}
+
+		partition, err = svc.PartitionRepository.Create(tx, repoData)
+		if err != nil {
+			return err
+		}
+
+		objectsToPartition, err := svc.ObjectToPartitionService.ActualizeToPartition(tx, partition.ID, data.ObjectIDs)
+		if err != nil {
+			return err
+		}
+
+		for _, o := range objectsToPartition {
+			objectIDs = append(objectIDs, o.ObjectID)
+		}
+
+		return nil
+	})
 	if err != nil {
 		return nil, err
-	}
-
-	objectsToPartition, err := svc.ObjectToPartitionService.ActualizeToPartition(ctx, partition.ID, data.ObjectIDs)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, o := range objectsToPartition {
-		objectIDs = append(objectIDs, o.ObjectID)
 	}
 
 	objects, err := svc.ObjectService.GetByIDs(ctx, objectIDs)
@@ -342,6 +365,10 @@ func (svc *partitionService) getEntitiesToPartition(ctx context.Context, partiti
 }
 
 func (svc *partitionService) Update(ctx context.Context, data *service.UpdatePartitionData) (*entity.PartitionEx, error) {
+	if err := data.Validate(); err != nil {
+		return nil, err
+	}
+
 	partition, err := svc.PartitionRepository.GetByID(ctx, data.ID)
 	if err != nil {
 		return nil, err
@@ -351,7 +378,15 @@ func (svc *partitionService) Update(ctx context.Context, data *service.UpdatePar
 		return nil, errors.New("invalid partition id")
 	}
 
-	if data.Name != nil {
+	if data.Name != nil && *data.Name != partition.Name {
+		partitionExists, err := svc.PartitionRepository.GetByNameAndChapterID(ctx, *data.Name, partition.ChapterID)
+		if err != nil {
+			return nil, err
+		}
+
+		if partitionExists != nil {
+			return nil, core_errors.PartitionNameAlreadyUsed
+		}
 		partition.Name = *data.Name
 	}
 
@@ -363,32 +398,39 @@ func (svc *partitionService) Update(ctx context.Context, data *service.UpdatePar
 		partition.Text = *data.Text
 	}
 
-	if data.OrderNumber != nil && *data.OrderNumber != partition.OrderNumber {
-		err = svc.changeOrder(ctx, *data.OrderNumber, data.ID, partition.ChapterID)
-		if err != nil {
-			return nil, err
+	err = svc.Transactor.Execute(ctx, func(tx context.Context) error {
+		if data.OrderNumber != nil && *data.OrderNumber != partition.OrderNumber {
+			err = svc.changeOrder(tx, *data.OrderNumber, data.ID, partition.ChapterID)
+			if err != nil {
+				return err
+			}
 		}
-	}
 
-	err = svc.PartitionRepository.Update(ctx, partition)
+		err = svc.PartitionRepository.Update(tx, partition)
+		if err != nil {
+			return err
+		}
+
+		if data.ObjectIDs != nil {
+			res, err := svc.ObjectToPartitionService.ActualizeToPartition(tx, partition.ID, *data.ObjectIDs)
+			if err != nil {
+				return err
+			}
+
+			slog.Debug(fmt.Sprintf("%v", res))
+		}
+
+		if data.EntityIDs != nil {
+			_, err = svc.EntityToPartitionService.ActualizeToPartition(tx, partition.ID, *data.EntityIDs)
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
 	if err != nil {
 		return nil, err
-	}
-
-	if data.ObjectIDs != nil {
-		res, err := svc.ObjectToPartitionService.ActualizeToPartition(ctx, partition.ID, *data.ObjectIDs)
-		if err != nil {
-			return nil, err
-		}
-
-		slog.Debug(fmt.Sprintf("%v", res))
-	}
-
-	if data.EntityIDs != nil {
-		_, err = svc.EntityToPartitionService.ActualizeToPartition(ctx, partition.ID, *data.EntityIDs)
-		if err != nil {
-			return nil, err
-		}
 	}
 
 	objectsEx, err := svc.getObjectsToPartition(ctx, partition.ID)
@@ -429,16 +471,23 @@ func (svc *partitionService) DeleteToChapter(ctx context.Context, ids []int64, c
 
 	maxOrder = uint(len(allPartitions))
 
-	for _, id := range ids {
-		err = svc.changeOrder(ctx, maxOrder, id, chapterID)
-		if err != nil {
-			return err
+	err = svc.Transactor.Execute(ctx, func(tx context.Context) error {
+		for _, id := range ids {
+			err = svc.changeOrder(ctx, maxOrder, id, chapterID)
+			if err != nil {
+				return err
+			}
+
+			err = svc.PartitionRepository.Delete(ctx, id)
+			if err != nil {
+				return err
+			}
 		}
 
-		err = svc.PartitionRepository.Delete(ctx, id)
-		if err != nil {
-			return err
-		}
+		return nil
+	})
+	if err != nil {
+		return err
 	}
 
 	return nil

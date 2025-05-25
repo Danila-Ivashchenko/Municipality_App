@@ -2,6 +2,7 @@ package context_paylod_parser
 
 import (
 	"context"
+	"database/sql"
 	"municipality_app/internal/domain/entity"
 )
 
@@ -35,6 +36,10 @@ func SetEntityTemplateToContext(ctx context.Context, entityTemplate *entity.Enti
 
 func SetRouteToContext(ctx context.Context, route *entity.Route) context.Context {
 	return context.WithValue(ctx, RoutePayloadKey, route)
+}
+
+func SetTransactionToContext(ctx context.Context, tx *sql.Tx) context.Context {
+	return context.WithValue(ctx, Transaction, tx)
 }
 
 func SetUserAuthTokenToContext(ctx context.Context, userAuthToken *entity.UserAuthToken) context.Context {
@@ -111,6 +116,15 @@ func GetRouteFromContext(ctx context.Context) *entity.Route {
 	}
 
 	return routeValue
+}
+
+func GetTransactionFromContext(ctx context.Context) *sql.Tx {
+	txValue, ok := ctx.Value(Transaction).(*sql.Tx)
+	if !ok {
+		return nil
+	}
+
+	return txValue
 }
 
 func GetUserAuthTokenFromContext(ctx context.Context) *entity.UserAuthToken {

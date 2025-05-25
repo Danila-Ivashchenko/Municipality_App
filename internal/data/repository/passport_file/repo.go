@@ -2,15 +2,15 @@ package passport_file
 
 import (
 	"context"
-	"database/sql"
 	sql_common "municipality_app/internal/common/data/sql"
+	"municipality_app/internal/common/sql_handler"
 	"municipality_app/internal/domain/entity"
 	"municipality_app/internal/domain/repository"
 	"municipality_app/internal/infrastructure/db"
 )
 
 type passportFileRepository struct {
-	db *sql.DB
+	handler sql_handler.Handler
 }
 
 func (r *passportFileRepository) Create(ctx context.Context, passportFile *entity.PassportFile) (*entity.PassportFile, error) {
@@ -20,7 +20,7 @@ func (r *passportFileRepository) Create(ctx context.Context, passportFile *entit
 
 	m := newPassportFileModel(passportFile)
 
-	row := r.db.QueryRowContext(ctx, createPassportFileQuery, m.Path, m.PassportID, m.FileName, m.CreateAt)
+	row := r.handler.QueryRowContext(ctx, createPassportFileQuery, m.Path, m.PassportID, m.FileName, m.CreateAt)
 
 	if row.Err() != nil {
 		return nil, row.Err()
@@ -50,7 +50,7 @@ func (r *passportFileRepository) GetByPassportID(ctx context.Context, passportID
 
 func New(m db.DataBaseManager) repository.PassportFileRepository {
 	repo := &passportFileRepository{
-		db: m.GetDB(),
+		handler: sql_handler.NewHandler(m.GetDB()),
 	}
 	return repo
 }

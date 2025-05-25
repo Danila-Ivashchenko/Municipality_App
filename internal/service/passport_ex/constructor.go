@@ -2,6 +2,7 @@ package passport_ex
 
 import (
 	"go.uber.org/fx"
+	"municipality_app/internal/common/transactor"
 	"municipality_app/internal/domain/service"
 )
 
@@ -15,6 +16,9 @@ type ServiceParams struct {
 	ObjectService            service.ObjectService
 	ObjectToPartitionService service.ObjectToPartitionService
 	PassportFileService      service.PassportFileService
+	RouteService             service.RouteService
+
+	Transactor transactor.Transactor
 }
 
 type passportExService struct {

@@ -2,6 +2,8 @@ package service
 
 import (
 	"context"
+	"municipality_app/internal/common/validator/field"
+	"municipality_app/internal/common/validator/validator"
 	"municipality_app/internal/domain/entity"
 )
 
@@ -41,10 +43,44 @@ type CreateOneChapterData struct {
 	OrderNumber uint
 }
 
+func (d *CreateOneChapterData) Validate() error {
+	v := validator.Validator{}
+
+	v.AddField(
+		field.NewStringField("Название глвавы", d.Name).Required().Between(3, 100),
+		field.NewInt64Field("Идентификатор паспорта туризма", d.PassportID).Required(),
+		field.NewIntField("Порядковый номер", int(d.OrderNumber)).Required().Bigger(3),
+	)
+
+	return v.Validate()
+}
+
 type UpdateChapterData struct {
 	ID          int64
 	Name        *string
 	Description *string
 	Text        *string
 	OrderNumber *uint
+}
+
+func (d *UpdateChapterData) Validate() error {
+	v := validator.Validator{}
+
+	v.AddField(
+		field.NewInt64Field("Идентификатор главы пользователя", d.ID).Required(),
+	)
+
+	if d.Name != nil {
+		v.AddField(
+			field.NewStringField("Имя", *d.Name).Required().Bigger(4),
+		)
+	}
+
+	if d.OrderNumber != nil {
+		v.AddField(
+			field.NewIntField("Порядковый номер", int(*d.OrderNumber)).Required().Bigger(4),
+		)
+	}
+
+	return v.Validate()
 }

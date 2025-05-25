@@ -16,11 +16,6 @@ func (h *Handler) Login(c *gin.Context) {
 		return
 	}
 
-	if validateErr := req.Validate(); validateErr != nil {
-		response.Error(c, validateErr)
-		return
-	}
-
 	data := req.Convert()
 
 	user, err := h.Params.UserService.Login(ctx, data)

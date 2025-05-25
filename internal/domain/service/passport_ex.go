@@ -13,6 +13,8 @@ type PassportExService interface {
 
 	GetChapterEx(ctx context.Context, chapterID, passportID int64) (*entity.ChapterEx, error)
 	GetPartitionEx(ctx context.Context, partitionID, chapterID int64) (*entity.PartitionEx, error)
+
+	Copy(ctx context.Context, data *CopyData) (*entity.Passport, error)
 }
 
 type PassportCreateChaptersData struct {
@@ -47,4 +49,13 @@ type PassportCreatePartitionData struct {
 	PassportID    int64
 	ChapterID     int64
 	PartitionData CreateOnePartitionData
+}
+
+type CopyData struct {
+	SrcID          int64
+	MunicipalityID int64
+
+	NewName string
+	NewYear string
+	IsMain  bool
 }

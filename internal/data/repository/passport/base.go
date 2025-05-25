@@ -18,7 +18,7 @@ const (
 )
 
 func (r *passportRepository) execQuery(ctx context.Context, sqlQuery string, args ...any) error {
-	res, err := r.db.ExecContext(ctx, sqlQuery, args...)
+	res, err := r.handler.ExecContext(ctx, sqlQuery, args...)
 	if err != nil {
 		return err
 	}
@@ -41,7 +41,7 @@ func (r *passportRepository) fetchRowWithCondition(ctx context.Context, conditio
 func (r *passportRepository) fetchRow(ctx context.Context, sqlQuery string, args ...any) (*entity.Passport, error) {
 	m := &passportModel{}
 
-	row := r.db.QueryRowContext(ctx, sqlQuery, args...)
+	row := r.handler.QueryRowContext(ctx, sqlQuery, args...)
 	if row.Err() != nil {
 		return nil, row.Err()
 	}
@@ -67,7 +67,7 @@ func (r *passportRepository) fetchRows(ctx context.Context, sqlQuery string, arg
 		result []entity.Passport
 	)
 
-	rows, err := r.db.QueryContext(ctx, sqlQuery, args...)
+	rows, err := r.handler.QueryContext(ctx, sqlQuery, args...)
 	if err != nil {
 		return nil, err
 	}

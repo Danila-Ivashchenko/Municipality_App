@@ -13,6 +13,7 @@ import (
 	"municipality_app/internal/http/handler/region"
 	"municipality_app/internal/http/handler/route"
 	"municipality_app/internal/http/handler/user"
+	"municipality_app/internal/http/handler/user_admin"
 )
 
 var (
@@ -28,5 +29,6 @@ var (
 		entity_type.New,
 		entity.New,
 		route.New,
+		user_admin.New,
 	)
 )

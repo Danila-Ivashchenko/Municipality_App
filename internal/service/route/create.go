@@ -10,6 +10,7 @@ import (
 func (svc *routeService) CreateToPartition(ctx context.Context, data *service.CreateRouteToPartitionData) (*entity.RouteEx, error) {
 	var (
 		routeObjects []entity.RouteObjectEx
+		routeCreate  *entity.Route
 	)
 
 	routeExists, err := svc.RouteRepository.GetByNamePartitionID(ctx, data.Route.Name, data.PartitionID)
@@ -36,21 +37,28 @@ func (svc *routeService) CreateToPartition(ctx context.Context, data *service.Cr
 		Geometry:          data.Route.Geometry,
 	}
 
-	routeCreate, err := svc.RouteRepository.Create(ctx, routeToCreate)
+	err = svc.Transactor.Execute(ctx, func(tx context.Context) error {
+		routeCreate, err = svc.RouteRepository.Create(ctx, routeToCreate)
+		if err != nil {
+			return err
+		}
+
+		if data.Route.Objects != nil {
+			setObjectsData := &service.SetObjectsToRoute{
+				RouteID: routeCreate.ID,
+				Objects: *data.Route.Objects,
+			}
+
+			routeObjects, err = svc.RouteObjectService.SetToRoute(ctx, setObjectsData)
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
 	if err != nil {
 		return nil, err
-	}
-
-	if data.Route.Objects != nil {
-		setObjectsData := &service.SetObjectsToRoute{
-			RouteID: routeCreate.ID,
-			Objects: *data.Route.Objects,
-		}
-
-		routeObjects, err = svc.RouteObjectService.SetToRoute(ctx, setObjectsData)
-		if err != nil {
-			return nil, err
-		}
 	}
 
 	result := entity.NewRouteEx(*routeCreate, routeObjects)

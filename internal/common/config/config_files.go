@@ -4,5 +4,5 @@
 package config
 
 var (
-	_ = addConfigFile("local.env")
+	_ = addConfigFile(".env")
 )

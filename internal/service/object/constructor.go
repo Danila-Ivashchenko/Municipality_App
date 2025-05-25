@@ -2,6 +2,7 @@ package object
 
 import (
 	"go.uber.org/fx"
+	"municipality_app/internal/common/transactor"
 	"municipality_app/internal/domain/repository"
 	"municipality_app/internal/domain/service"
 )
@@ -12,6 +13,8 @@ type ServiceParams struct {
 	ObjectRepository       repository.ObjectRepository
 	LocationRepository     repository.LocationRepository
 	ObjectAttributeService service.ObjectAttributeService
+
+	Transactor transactor.Transactor
 }
 
 type objectService struct {

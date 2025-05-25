@@ -9,8 +9,9 @@ import (
 type ServiceParams struct {
 	fx.In
 
-	UserAuthService service.UserAuthService
-	UserRepository  repository.UserRepository
+	UserAuthService       service.UserAuthService
+	UserRepository        repository.UserRepository
+	UserPermissionService service.UserPermissionService
 }
 
 type userService struct {

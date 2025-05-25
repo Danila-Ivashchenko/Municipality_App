@@ -14,7 +14,7 @@ func (svc *passportFileService) Create(ctx context.Context, municipality *entity
 	)
 
 	fileName := fmt.Sprintf("Паспорт туризма муниципального образования %s %s.pdf", municipality.Name, passport.Name)
-	storagePass := "storage"
+	storagePass := svc.storagePath
 	uniquePath := uuid.New().String() + ".pdf"
 	filePath := fmt.Sprintf("%s/%s", storagePass, uniquePath)
 

@@ -19,10 +19,12 @@ type ServiceParams struct {
 
 type passportFileService struct {
 	ServiceParams
+	storagePath string
 }
 
-func New(params ServiceParams) service.PassportFileService {
+func New(params ServiceParams, cfg *config.Config) service.PassportFileService {
 	return &passportFileService{
 		ServiceParams: params,
+		storagePath:   cfg.GetStoragePath(),
 	}
 }

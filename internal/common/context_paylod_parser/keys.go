@@ -10,4 +10,6 @@ const (
 	ObjectTemplatePayloadKey      = "object_template"
 	EntityTemplatePayloadKey      = "entity_template"
 	RoutePayloadKey               = "route"
+
+	Transaction = "tx"
 )

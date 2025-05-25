@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"go.uber.org/fx"
 	"municipality_app/cmd/container"
+	"municipality_app/internal/common/migrator"
 	"time"
 )
 
@@ -18,11 +19,17 @@ func runServer(r *gin.Engine) {
 		}
 	}()
 }
+
+func upMigrations(m *migrator.BaseMigrator) error {
+	return m.Up()
+}
+
 func main() {
 	initTime()
 
 	fx.New(
 		container.MainContainer,
+		fx.Invoke(upMigrations),
 		fx.Invoke(runServer),
 	).Run()
 }

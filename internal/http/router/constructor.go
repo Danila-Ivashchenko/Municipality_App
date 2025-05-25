@@ -14,6 +14,7 @@ import (
 	"municipality_app/internal/http/handler/region"
 	"municipality_app/internal/http/handler/route"
 	"municipality_app/internal/http/handler/user"
+	"municipality_app/internal/http/handler/user_admin"
 	"municipality_app/internal/http/middleware/auth"
 	"municipality_app/internal/http/middleware/mun"
 	"municipality_app/internal/http/middleware/municipality_passport"
@@ -27,6 +28,7 @@ type RouterParams struct {
 	PassportMiddleware     municipality_passport.Middleware
 
 	UserHandler         user.Handler
+	UserAdminHandler    user_admin.Handler
 	RegionHandler       region.Handler
 	MunicipalityHandler municipality.Handler
 	PassportHandler     passport.Handler

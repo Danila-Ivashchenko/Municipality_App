@@ -2,7 +2,7 @@ package entity_template
 
 import (
 	"context"
-	"errors"
+	"municipality_app/internal/domain/core_errors"
 	"municipality_app/internal/domain/entity"
 	"municipality_app/internal/domain/repository"
 	"municipality_app/internal/domain/service"
@@ -10,7 +10,9 @@ import (
 
 func (svc *objectTemplateService) Create(ctx context.Context, data *service.CreateEntityTemplateData) (*entity.EntityTemplateEx, error) {
 	var (
-		attributes []entity.EntityAttribute
+		attributes  []entity.EntityAttribute
+		entityTyper *entity.EntityType
+		template    *entity.EntityTemplate
 	)
 
 	templateExist, err := svc.GetByNameAndMunicipalityID(ctx, data.Name, data.MunicipalityID)
@@ -19,7 +21,7 @@ func (svc *objectTemplateService) Create(ctx context.Context, data *service.Crea
 	}
 
 	if templateExist != nil {
-		return nil, errors.New("template already exist")
+		return nil, core_errors.EntityTemplateNameIsUsed
 	}
 
 	repoData := &repository.CreateEntityTemplateData{
@@ -28,28 +30,35 @@ func (svc *objectTemplateService) Create(ctx context.Context, data *service.Crea
 		EntityType:     data.EntityType,
 	}
 
-	template, err := svc.EntityTemplateRepository.Create(ctx, repoData)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, attributeData := range data.Attributes {
-		createAttributeData := service.CreateEntityAttributeData{
-			EntityTemplateID: template.ID,
-			Name:             attributeData.Name,
-			DefaultValue:     attributeData.DefaultValue,
-			ToShow:           attributeData.ToShow,
-		}
-
-		attribute, err := svc.EntityAttributeService.CreateAttribute(ctx, createAttributeData)
+	err = svc.Transactor.Execute(ctx, func(tx context.Context) error {
+		template, err = svc.EntityTemplateRepository.Create(tx, repoData)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
-		attributes = append(attributes, *attribute)
-	}
+		for _, attributeData := range data.Attributes {
+			createAttributeData := service.CreateEntityAttributeData{
+				EntityTemplateID: template.ID,
+				Name:             attributeData.Name,
+				DefaultValue:     attributeData.DefaultValue,
+				ToShow:           attributeData.ToShow,
+			}
 
-	entityTyper, err := svc.EntityTypeService.GetByID(ctx, data.EntityType)
+			attribute, err := svc.EntityAttributeService.CreateAttribute(tx, createAttributeData)
+			if err != nil {
+				return err
+			}
+
+			attributes = append(attributes, *attribute)
+		}
+
+		entityTyper, err = svc.EntityTypeService.GetByID(tx, data.EntityType)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
 	if err != nil {
 		return nil, err
 	}

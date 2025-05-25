@@ -1,4 +1,6 @@
 
+-- +migrate Up
+
 CREATE TABLE IF NOT EXISTS users (
     id BIGSERIAL PRIMARY KEY,
     email VARCHAR(255) UNIQUE NOT NULL,
@@ -9,6 +11,7 @@ CREATE TABLE IF NOT EXISTS users (
     is_blocked bool NOT NULL default false,
     created_at TIMESTAMP Default now()
 );
+
 
 CREATE TABLE IF NOT EXISTS user_auth_token (
     id BIGSERIAL PRIMARY KEY,
@@ -114,8 +117,11 @@ CREATE TABLE IF NOT EXISTS municipality_object_to_passport_partition (
     UNIQUE (municipality_passport_partitition_id, municipality_object_id)
 );
 
-ALTER TABLE municipality_object_to_passport_partition ADD FOREIGN KEY (municipality_passport_partitition_id) REFERENCES municipality_passport_partitition(id) ON delete CASCADE
-ALTER TABLE municipality_object_to_passport_partition ADD FOREIGN KEY (municipality_object_id) REFERENCES municipality_object(id) ON delete CASCADE
+ALTER TABLE municipality_object_to_passport_partition
+    ADD FOREIGN KEY (municipality_passport_partitition_id) REFERENCES municipality_passport_partitition(id) ON delete CASCADE;
+
+ALTER TABLE municipality_object_to_passport_partition
+    ADD FOREIGN KEY (municipality_object_id) REFERENCES municipality_object(id) ON delete CASCADE;
 
 CREATE TABLE IF NOT EXISTS municipality_object_attribute (
     id BIGSERIAL PRIMARY KEY,
@@ -166,8 +172,11 @@ CREATE TABLE IF NOT EXISTS municipality_entity_to_passport_partition (
     UNIQUE (municipality_passport_partitition_id, municipality_entity_id)
 );
 
-ALTER TABLE municipality_entity_to_passport_partition ADD FOREIGN KEY (municipality_passport_partitition_id) REFERENCES municipality_passport_partitition(id) ON delete CASCADE
-ALTER TABLE municipality_entity_to_passport_partition ADD FOREIGN KEY (municipality_entity_id) REFERENCES municipality_entity(id) ON delete CASCADE
+ALTER TABLE municipality_entity_to_passport_partition
+    ADD FOREIGN KEY (municipality_passport_partitition_id) REFERENCES municipality_passport_partitition(id) ON delete CASCADE;
+
+ALTER TABLE municipality_entity_to_passport_partition
+    ADD FOREIGN KEY (municipality_entity_id) REFERENCES municipality_entity(id) ON delete CASCADE;
 
 CREATE TABLE IF NOT EXISTS municipality_entity_attribute (
     id BIGSERIAL PRIMARY KEY,
@@ -227,5 +236,14 @@ CREATE TABLE IF NOT EXISTS municipality_passport_file (
     created_at TIMESTAMP Default now(),
     FOREIGN KEY (passport_id) REFERENCES municipality_passport(id) ON delete cascade,
     UNIQUE (passport_id, path)
-)
+);
 
+CREATE TABLE IF NOT EXISTS user_permission (
+    user_id bigint NOT NULL,
+    permission bigint NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON delete SET NULL,
+    UNIQUE (user_id, permission)
+);
+
+-- +migrate Down
+-- (здесь должен быть код отката миграции, если нужно)

@@ -226,3 +226,50 @@ func (req *reqUpdateChapter) Convert(passportID, municipalityID int64) *service.
 
 	return result
 }
+
+type reqCopyPassport struct {
+	Name   *string `json:"name"`
+	Year   *string `json:"year"`
+	IsMain *bool   `json:"is_main"`
+}
+
+func (req *reqCopyPassport) Validate() error {
+	if req.Name == nil || *req.Name == "" {
+		return errors.New("name is required")
+	}
+
+	if req.Year != nil {
+		if len(*req.Year) != 4 {
+			return errors.New("invalid year value")
+		}
+	}
+
+	return nil
+}
+
+func (req *reqCopyPassport) Convert(passportID, municipalityID int64) *service.CopyData {
+	var (
+		yearVal   string
+		isMainVal bool
+	)
+
+	if req.Year != nil {
+		yearVal = *req.Year
+	} else {
+		year := time.Now().Year()
+		yearVal = strconv.Itoa(year)
+	}
+
+	if req.IsMain != nil {
+		isMainVal = *req.IsMain
+	}
+
+	return &service.CopyData{
+		NewName: *req.Name,
+		NewYear: yearVal,
+		IsMain:  isMainVal,
+
+		MunicipalityID: municipalityID,
+		SrcID:          passportID,
+	}
+}

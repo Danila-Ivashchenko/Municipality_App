@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/thanhpk/randstr"
+	"municipality_app/internal/domain/core_errors"
 	"municipality_app/internal/domain/entity"
 	"municipality_app/internal/domain/repository"
 	"municipality_app/internal/domain/service"
@@ -18,13 +19,17 @@ func generateRevisionCode() string {
 }
 
 func (svc *passportService) Create(ctx context.Context, data *service.CreatePassportData) (*entity.Passport, error) {
+	var (
+		result *entity.Passport
+	)
+
 	municipalityExists, err := svc.MunicipalityRepository.GetById(ctx, data.MunicipalityID)
 	if err != nil {
 		return nil, err
 	}
 
 	if municipalityExists == nil {
-		return nil, errors.New("municipality not found")
+		return nil, core_errors.MunicipalityNotFound
 	}
 
 	passportExists, err := svc.PassportRepository.GetByNameAndMunicipalityID(ctx, data.Name, data.MunicipalityID)
@@ -33,38 +38,50 @@ func (svc *passportService) Create(ctx context.Context, data *service.CreatePass
 	}
 
 	if passportExists != nil {
-		return nil, errors.New("passport with this name already exists")
+		return nil, core_errors.PassportNameAlreadyUsed
 	}
 
-	revisionCode, err := svc.getNewRevisionCode(ctx)
+	err = svc.Transactor.Execute(ctx, func(tx context.Context) error {
+		revisionCode, err := svc.getNewRevisionCode(tx)
+		if err != nil {
+			return err
+		}
+
+		if data.IsMain {
+			mainPassport, err := svc.PassportRepository.GetMainByMunicipalityID(tx, data.MunicipalityID)
+			if err != nil {
+				return err
+			}
+
+			if mainPassport != nil {
+				err = svc.PassportRepository.ChangeIsMainByID(tx, mainPassport.ID, false)
+				if err != nil {
+					return err
+				}
+			}
+		}
+
+		repoData := &repository.CreatePassportData{
+			Name:           data.Name,
+			MunicipalityID: data.MunicipalityID,
+			Description:    data.Description,
+			Year:           data.Year,
+			IsMain:         data.IsMain,
+			RevisionCode:   revisionCode,
+		}
+
+		result, err = svc.PassportRepository.Create(tx, repoData)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	if data.IsMain {
-		mainPassport, err := svc.PassportRepository.GetMainByMunicipalityID(ctx, data.MunicipalityID)
-		if err != nil {
-			return nil, err
-		}
-
-		if mainPassport != nil {
-			err = svc.PassportRepository.ChangeIsMainByID(ctx, mainPassport.ID, false)
-			if err != nil {
-				return nil, err
-			}
-		}
-	}
-
-	repoData := &repository.CreatePassportData{
-		Name:           data.Name,
-		MunicipalityID: data.MunicipalityID,
-		Description:    data.Description,
-		Year:           data.Year,
-		IsMain:         data.IsMain,
-		RevisionCode:   revisionCode,
-	}
-
-	return svc.PassportRepository.Create(ctx, repoData)
+	return result, nil
 }
 
 func (svc *passportService) getNewRevisionCode(ctx context.Context) (string, error) {
@@ -145,21 +162,25 @@ func (svc *passportService) Update(ctx context.Context, data *service.UpdatePass
 		passport.IsHidden = *data.IsHidden
 	}
 
-	if data.IsMain != nil && *data.IsMain {
-		err = svc.MakeMainPassportToMunicipality(ctx, data.ID, data.MunicipalityID)
-		if err != nil {
-			return nil, err
+	err = svc.Transactor.Execute(ctx, func(tx context.Context) error {
+		if data.IsMain != nil && *data.IsMain {
+			err = svc.MakeMainPassportToMunicipality(tx, data.ID, data.MunicipalityID)
+			if err != nil {
+				return err
+			}
 		}
-	}
 
-	if !updated {
-		return passport, nil
-	}
+		if !updated {
+			return nil
+		}
 
-	err = svc.PassportRepository.Update(ctx, passport)
-	if err != nil {
-		return nil, err
-	}
+		err = svc.PassportRepository.Update(tx, passport)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
 
 	return passport, nil
 }
@@ -186,28 +207,35 @@ func (svc *passportService) Delete(ctx context.Context, id, municipalityID int64
 }
 
 func (svc *passportService) MakeMainPassportToMunicipality(ctx context.Context, id, municipalityID int64) error {
-	mainPassport, err := svc.PassportRepository.GetMainByMunicipalityID(ctx, municipalityID)
-	if err != nil {
-		return err
-	}
-
-	if mainPassport != nil {
-		err = svc.PassportRepository.ChangeIsMainByID(ctx, mainPassport.ID, false)
+	err := svc.Transactor.Execute(ctx, func(tx context.Context) error {
+		mainPassport, err := svc.PassportRepository.GetMainByMunicipalityID(ctx, municipalityID)
 		if err != nil {
 			return err
 		}
-	}
 
-	passport, err := svc.GetByIDAndMunicipalityID(ctx, id, municipalityID)
+		if mainPassport != nil {
+			err = svc.PassportRepository.ChangeIsMainByID(ctx, mainPassport.ID, false)
+			if err != nil {
+				return err
+			}
+		}
+
+		passport, err := svc.GetByIDAndMunicipalityID(ctx, id, municipalityID)
+		if err != nil {
+			return err
+		}
+
+		if passport == nil {
+			return errors.New("passport not found")
+		}
+
+		return svc.PassportRepository.ChangeIsMainByID(ctx, passport.ID, true)
+	})
 	if err != nil {
 		return err
 	}
 
-	if passport == nil {
-		return errors.New("passport not found")
-	}
-
-	return svc.PassportRepository.ChangeIsMainByID(ctx, passport.ID, true)
+	return nil
 }
 
 func (svc *passportService) GetByIDAndMunicipalityID(ctx context.Context, id, municipalityID int64) (*entity.Passport, error) {

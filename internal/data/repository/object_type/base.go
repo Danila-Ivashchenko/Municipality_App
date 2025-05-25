@@ -16,7 +16,7 @@ const (
 )
 
 func (r *objectRepository) execQuery(ctx context.Context, sqlQuery string, args ...any) error {
-	res, err := r.db.ExecContext(ctx, sqlQuery, args...)
+	res, err := r.handler.ExecContext(ctx, sqlQuery, args...)
 	if err != nil {
 		return err
 	}
@@ -39,7 +39,7 @@ func (r *objectRepository) fetchRowWithCondition(ctx context.Context, condition 
 func (r *objectRepository) fetchRow(ctx context.Context, sqlQuery string, args ...any) (*entity.ObjectType, error) {
 	m := &modelObjectType{}
 
-	row := r.db.QueryRowContext(ctx, sqlQuery, args...)
+	row := r.handler.QueryRowContext(ctx, sqlQuery, args...)
 	if row.Err() != nil {
 		return nil, row.Err()
 	}
@@ -65,7 +65,7 @@ func (r *objectRepository) fetchRows(ctx context.Context, sqlQuery string, args 
 		result []entity.ObjectType
 	)
 
-	rows, err := r.db.QueryContext(ctx, sqlQuery, args...)
+	rows, err := r.handler.QueryContext(ctx, sqlQuery, args...)
 	if err != nil {
 		return nil, err
 	}

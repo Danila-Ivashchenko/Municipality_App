@@ -27,6 +27,9 @@ type Config struct {
 	postgresSSLMode    string
 	storageFileBaseURL string
 
+	storagePath    string
+	migrationsPath string
+
 	env string
 
 	httpPort string
@@ -43,6 +46,14 @@ func (c *Config) GetHTTPPort() string {
 
 func (c *Config) GetFileStorageBaseURL() string {
 	return c.storageFileBaseURL
+}
+
+func (c *Config) GetStoragePath() string {
+	return c.storagePath
+}
+
+func (c *Config) GetMigrationsPath() string {
+	return c.migrationsPath
 }
 
 func (c *Config) GetEnv() string {
@@ -75,6 +86,8 @@ func GetConfig() *Config {
 		postgresSSLMode:    "disable",
 		httpHost:           "localhost",
 		storageFileBaseURL: "http://localhost:6060",
+		storagePath:        "storage",
+		migrationsPath:     "migrations",
 	}
 
 	user := os.Getenv("POSTGRES_USER")
@@ -87,6 +100,8 @@ func GetConfig() *Config {
 	httpPort := os.Getenv("HTTP_PORT")
 	httpHost := os.Getenv("HTTP_HOST")
 	storageFileBaseURL := os.Getenv("FILE_STORAGE_BASE_URL")
+	storagePath := os.Getenv("FILE_STORAGE_PATH")
+	migrationsPath := os.Getenv("MIGRATIONS_PATH")
 
 	if env != "" {
 		cfg.env = env
@@ -118,7 +133,12 @@ func GetConfig() *Config {
 	if storageFileBaseURL != "" {
 		cfg.storageFileBaseURL = storageFileBaseURL
 	}
+	if storagePath != "" {
+		cfg.storagePath = storagePath
+	}
+	if migrationsPath != "" {
+		cfg.migrationsPath = migrationsPath
+	}
 
-	fmt.Println(cfg.GetPsqlURL())
 	return cfg
 }

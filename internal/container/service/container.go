@@ -24,7 +24,9 @@ import (
 	"municipality_app/internal/service/route"
 	"municipality_app/internal/service/route_object"
 	"municipality_app/internal/service/user"
+	"municipality_app/internal/service/user_admin"
 	"municipality_app/internal/service/user_auth"
+	"municipality_app/internal/service/user_permission"
 )
 
 var (
@@ -55,5 +57,9 @@ var (
 		entity_to_partition.New,
 
 		passport_file.New,
+
+		user_permission.New,
+
+		user_admin.New,
 	)
 )
