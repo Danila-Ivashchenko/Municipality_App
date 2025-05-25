@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/google/uuid"
+	"log/slog"
 	"municipality_app/internal/domain/entity"
 	"time"
 )
@@ -20,6 +21,7 @@ func (svc *passportFileService) Create(ctx context.Context, municipality *entity
 
 	err = svc.BuildPassportFile(filePath, passport)
 	if err != nil {
+		slog.Error("fail to create passport file", filePath, "error:", err.Error())
 		return nil, err
 	}
 

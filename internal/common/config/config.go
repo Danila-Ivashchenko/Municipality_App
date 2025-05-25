@@ -8,9 +8,7 @@ import (
 )
 
 var (
-	configFiles = []string{
-		".env",
-	}
+	configFiles = []string{}
 )
 
 func addConfigFile(file string) int {
@@ -32,8 +30,16 @@ type Config struct {
 
 	env string
 
+	useHttp  bool
 	httpPort string
 	httpHost string
+
+	useHttps  bool
+	httpsPort string
+	httpsHost string
+
+	httpsCertPath string
+	httpsKeyPath  string
 }
 
 func (c *Config) GetPsqlURL() string {
@@ -69,6 +75,38 @@ func LoadEnv(filenames ...string) error {
 	return nil
 }
 
+func (c *Config) UseHttp() bool {
+	return c.useHttp
+}
+
+func (c *Config) HttpPort() string {
+	return c.httpPort
+}
+
+func (c *Config) HttpHost() string {
+	return c.httpHost
+}
+
+func (c *Config) UseHttps() bool {
+	return c.useHttps
+}
+
+func (c *Config) HttpsPort() string {
+	return c.httpsPort
+}
+
+func (c *Config) HttpsHost() string {
+	return c.httpsHost
+}
+
+func (c *Config) CertPath() string {
+	return c.httpsCertPath
+}
+
+func (c *Config) CertKeyPath() string {
+	return c.httpsKeyPath
+}
+
 func GetConfig() *Config {
 	if len(configFiles) > 0 {
 		err := LoadEnv(configFiles...)
@@ -84,10 +122,20 @@ func GetConfig() *Config {
 		postgresDB:         "",
 		env:                "local",
 		postgresSSLMode:    "disable",
-		httpHost:           "localhost",
 		storageFileBaseURL: "http://localhost:6060",
 		storagePath:        "storage",
 		migrationsPath:     "migrations",
+
+		useHttp:  true,
+		httpPort: "8080",
+		httpHost: "0.0.0.0",
+
+		useHttps:  false,
+		httpsPort: "8443",
+		httpsHost: "0.0.0.0",
+
+		httpsCertPath: "./cert/cert.crt",
+		httpsKeyPath:  "./cert/secret.key",
 	}
 
 	user := os.Getenv("POSTGRES_USER")
@@ -97,20 +145,23 @@ func GetConfig() *Config {
 	db := os.Getenv("POSTGRES_DB")
 	ssl := os.Getenv("POSTGRES_SSL_MODE")
 	env := os.Getenv("ENV")
-	httpPort := os.Getenv("HTTP_PORT")
-	httpHost := os.Getenv("HTTP_HOST")
+
 	storageFileBaseURL := os.Getenv("FILE_STORAGE_BASE_URL")
 	storagePath := os.Getenv("FILE_STORAGE_PATH")
 	migrationsPath := os.Getenv("MIGRATIONS_PATH")
 
+	useHttp := os.Getenv("USE_HTTP")
+	httpPort := os.Getenv("HTTP_PORT")
+	httpHost := os.Getenv("HTTP_HOST")
+
+	useHttps := os.Getenv("USE_HTTPS")
+	httpsPort := os.Getenv("HTTPS_PORT")
+	httpsHost := os.Getenv("HTTPS_HOST")
+	httpsCertPath := os.Getenv("HTTPS_CERT_PATH")
+	httpsKeyPath := os.Getenv("HTTPS_KEY_PATH")
+
 	if env != "" {
 		cfg.env = env
-	}
-	if httpPort != "" {
-		cfg.httpPort = httpPort
-	}
-	if httpHost != "" {
-		cfg.httpHost = httpHost
 	}
 	if user != "" {
 		cfg.postgresUser = user
@@ -138,6 +189,32 @@ func GetConfig() *Config {
 	}
 	if migrationsPath != "" {
 		cfg.migrationsPath = migrationsPath
+	}
+
+	if useHttp != "" {
+		cfg.useHttp = useHttp == "true"
+	}
+	if httpPort != "" {
+		cfg.httpPort = httpPort
+	}
+	if httpHost != "" {
+		cfg.httpHost = httpHost
+	}
+
+	if useHttps != "" {
+		cfg.useHttps = useHttps == "true"
+	}
+	if httpsPort != "" {
+		cfg.httpsPort = httpsPort
+	}
+	if httpsHost != "" {
+		cfg.httpsHost = httpsHost
+	}
+	if httpsCertPath != "" {
+		cfg.httpsCertPath = httpsCertPath
+	}
+	if httpsKeyPath != "" {
+		cfg.httpsKeyPath = httpsKeyPath
 	}
 
 	return cfg

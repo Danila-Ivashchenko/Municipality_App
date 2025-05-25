@@ -24,5 +24,34 @@ services:
     volumes:
       - "./storage:/usr/share/nginx/html:ro"
       - "./nginx.conf:/etc/nginx/conf.d/default.conf:ro"
+
+  api:
+    build: .
+    container_name: tag-api
+    environment:
+      POSTGRES_HOST: db-new
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_SSL_MODE: ${POSTGRES_SSL_MODE}
+      ENV: ${ENV}
+      FILE_STORAGE_BASE_URL: ${FILE_STORAGE_BASE_URL}
+      USE_HTTP: ${USE_HTTP}
+      HTTP_PORT: ${HTTP_PORT}
+      HTTP_HOST: ${HTTP_HOST}
+      USE_HTTPS: ${USE_HTTPS}
+      HTTPS_PORT: ${HTTPS_PORT}
+      HTTPS_HOST: ${HTTPS_HOST}
+      HTTPS_CERT_PATH: ${HTTPS_CERT_PATH}
+      HTTPS_KEY_PATH: ${HTTPS_KEY_PATH}
+      FILE_STORAGE_PATH: ${FILE_STORAGE_PATH}
+    ports:
+      - "${HTTP_PORT}:${HTTP_PORT}"
+      - "${HTTPS_PORT}:${HTTPS_PORT}"
+    volumes:
+      - "./cert:/cert"
+      - "./new_storage:/${FILE_STORAGE_PATH}"
+
 volumes:
   postgres_data_new:
